@@ -24,7 +24,7 @@ from PySide6.QtWidgets import (QAbstractSpinBox, QApplication, QDoubleSpinBox, Q
 
 from live_plot import LivePlot
 from qtexteditlogger import QTextEditLogger
-from tabcontrol import TabControl
+from tab_control import TabControl
 from table_control import TableControl
 from video_preview import VideoPreview
 

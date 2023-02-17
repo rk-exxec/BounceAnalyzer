@@ -523,7 +523,7 @@
   <customwidget>
    <class>TabControl</class>
    <extends>QTabWidget</extends>
-   <header>tabcontrol</header>
+   <header>tab_control</header>
    <container>1</container>
   </customwidget>
  </customwidgets>
