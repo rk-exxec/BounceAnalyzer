@@ -1,0 +1,32 @@
+﻿.venv
+.pipenv
+.vscode/.ropeproject
+__pycache__
+
+app.log
+log
+
+## Videos
+*.mp4
+*.avi
+
+## Measurement Data
+*.csv
+*.xlsx
+*.png
+
+## Docs
+docs/_build
+docs/api/**
+
+
+## QT Creator
+*.pyproject.user*
+*.pyproject
+.qt_for_python/*
+
+
+## Testing and Build Artifacts
+!tests/*.png
+build
+dist
