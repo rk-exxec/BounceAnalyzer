@@ -92,6 +92,9 @@ class LivePlot(pg.PlotWidget):
     def vline(self, x, color, cosmetic=True, width=2):
         self.plotItem.addItem(pg.InfiniteLine(x, angle = 90, pen=pg.mkPen(color=color, width=width, cosmetic=cosmetic)))
 
+    def hline(self, x, color, cosmetic=True, width=2):
+        self.plotItem.addItem(pg.InfiniteLine(x, angle = 0, pen=pg.mkPen(color=color, width=width, cosmetic=cosmetic)))
+
     def set_image(self, image):
         self.image_item = pg.ImageItem(image.T, autoDownsample=False,)
         self.plotItem.addItem(self.image_item)

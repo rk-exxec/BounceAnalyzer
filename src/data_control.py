@@ -97,10 +97,12 @@ class DataControl(QObject):
         self.ui.accelGraph.plot(data, "Time", "Acceleration_Smooth", "Time", "Acceleration", "s", "m/s^2", "g", si_prefix=False)
         self.ui.accelGraph.scatter(data, "Time", "Acceleration", "Time", "Acceleration", "s", "m/s^2", "r")
         self.ui.accelGraph.vline(eval_data["Contact_Time"].item(), "y")
+        self.ui.accelGraph.hline(eval_data["Accel_Thresh"].item(), "m")
+        self.ui.accelGraph.vline(eval_data["Accel_Thresh_Trig_Time"].item(), "m")
 
-        self.ui.corLbl.setText(str(eval_data["COR"].item()))
-        self.ui.maxDeformLbl.setText(str(eval_data["Max_Deformation"].item()))
-        self.ui.maxAccelLbl.setText(str(eval_data["Max_Acceleration"].item()))
+        self.ui.corLbl.setText(f"{eval_data['COR'].item():0.3f}")
+        self.ui.maxDeformLbl.setText(f'{eval_data["Max_Deformation"].item()*1000:0.3f} mm')
+        self.ui.maxAccelLbl.setText(f'{eval_data["Max_Acceleration"].item():0.1f} m/s^2')
 
         self.ui.tabWidget.setCurrentIndex(1)
 
