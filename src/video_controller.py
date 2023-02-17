@@ -17,7 +17,7 @@
 import os
 from pathlib import Path
 from video_preview import VideoPreview
-from video_reader import VideoReader, VideoReaderMem
+from video_reader import VideoReaderMem
 
 import numpy as np
 import pandas as pd
@@ -46,12 +46,9 @@ class VideoController(QObject):
         self._play_timer.timeout.connect(self.timer_handler)
         self._video_limits = [0,None]
         self.video_name = ""
-        self.load_video(r"C:\Users\krr38985\Documents\Python\DropletEval\recordings\20220215_154737.mp4")
         self.current_frame_pos = 0
         self.contact_pos = 0
         self.contact_frame = 0
-            
-        # self._roi_rubber_band = ResizableRubberBand(self)
         
 
     @Slot()

@@ -44,6 +44,8 @@ class BounceAnalyzer(QMainWindow, Ui_Bounce):
         self.videoController = VideoController(self)
         self.data_control = DataControl(self.videoController, self)
         self.evaluator = VideoEvaluator(self.videoController, self.data_control, self, parent=self)
+
+        self.videoController.load_video("data/ball_12bit_full.cihx")
         self.tabWidget.setCurrentIndex(0)
         self.register_action_events()
 
