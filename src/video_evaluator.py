@@ -49,7 +49,7 @@ class VideoEvaluator(QObject):
         w,h = self._video_controller.reader.frame_shape
         N = self._video_controller.reader.number_of_frames
         dt =  1/self._video_controller.reader.frame_rate
-        pixel_scale = self._video_controller.reader.pixel_scale
+        pixel_scale = (0.0000197)#self._video_controller.reader.pixel_scale
        
         streak = np.zeros((N,h), dtype=np.uint16)
 
@@ -127,10 +127,19 @@ class VideoEvaluator(QObject):
         time_data["Accel_Thresh_Trig_Time"] = touch_time
 
         filename = self._data_control.video_path
-        *_, material, height, magnet, spacing, _, _  = filename.parts
+        try:
+            *_, material, height, magnet, spacing, _, _  = filename.parts
+            material = material.split("_")[-1].replace(".","")+"22"
+            height = float(height[1:])*1e-3
+        except:
+            material = ""
+            height = 1
+            magnet = ""
+            spacing = ""
+    
 
-        time_data["Material"] = material.split("_")[-1].replace(".","")+"22"
-        time_data["Drop_Height"] = float(height[1:])*1e-3
+        time_data["Material"] = material
+        time_data["Drop_Height"] = height
         time_data["Magnet"] = magnet
         time_data["Lamella_Spacing"] = spacing
 
@@ -145,8 +154,8 @@ class VideoEvaluator(QObject):
         eval_data["Max_Deformation"] = max_deformation
         eval_data["COR"] = cof
         eval_data["Max_Acceleration"] = max_acc
-        eval_data["Material"] = material.split("_")[-1].replace(".","")+"22"
-        eval_data["Drop_Height"] = float(height[1:])*1e-3
+        eval_data["Material"] = material
+        eval_data["Drop_Height"] = height
         eval_data["Magnet"] = magnet
         eval_data["Lamella_Spacing"] = spacing    
         eval_data["Contact_Time"] = contact_time
