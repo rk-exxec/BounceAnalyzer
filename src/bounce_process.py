@@ -23,6 +23,9 @@ from pathlib import Path
 #silences error on program quit, as handler is deleted before logger
 logging.raiseExceptions = False
 logging.getLogger("numba").setLevel(logging.WARNING)
+import warnings
+
+warnings.filterwarnings('ignore', module='pyMRAW')
 
 from PySide6 import QtGui
 from PySide6.QtGui import QShortcut, QFont
