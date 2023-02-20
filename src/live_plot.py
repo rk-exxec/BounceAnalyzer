@@ -87,12 +87,12 @@ class LivePlot(pg.PlotWidget):
         # self.plotItem.clear()
         self.setLabel('left', label_y, units=unit_y)
         self.setLabel('bottom', label_x, units=unit_x)
-        plt = self.plotItem.addItem(pg.ScatterPlotItem(y=data[y], x=data[x], pen=pg.mkPen((200,50,50,100)), symbol="s", brush=pg.mkBrush(None)))
+        plt = self.plotItem.addItem(pg.ScatterPlotItem(y=data[y], x=data[x], pen=pg.mkPen((200,50,50,150)), symbol="s", brush=pg.mkBrush(None)))
 
     def vline(self, x, color, cosmetic=True, width=2):
         self.plotItem.addItem(pg.InfiniteLine(x, angle = 90, pen=pg.mkPen(color=color, width=width, cosmetic=cosmetic)))
 
-    def hline(self, x, color, cosmetic=True, width=2):
+    def hline(self, x, color, cosmetic=True, width=1):
         self.plotItem.addItem(pg.InfiniteLine(x, angle = 0, pen=pg.mkPen(color=color, width=width, cosmetic=cosmetic)))
 
     def set_image(self, image):

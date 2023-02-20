@@ -92,13 +92,17 @@ class DataControl(QObject):
         self.ui.streakImage.set_image(strk_img)
         self.ui.streakImage.plot(contour, 0, 1, "", "","","","r")
         self.ui.distanceGraph.plot(data, "Time", "Distance", "Time", "Distance", "s", "m", "g")
-        self.ui.distanceGraph.vline(eval_data["Contact_Time"].item(), "y")
+        # self.ui.distanceGraph.vline(eval_data["Contact_Time"].item(), "y")
+
+        self.ui.distanceGraph.vline(eval_data["Accel_Thresh_Trig_Time"].item(), "m")
         self.ui.velocityGraph.plot(data, "Time", "Velocity_Smooth", "Time", "Velocity", "s", "m/s", "g")
         self.ui.velocityGraph.scatter(data, "Time", "Velocity", "Time", "Velocity", "s", "m/s", "r")
-        self.ui.velocityGraph.vline(eval_data["Contact_Time"].item(), "y")
+        # self.ui.velocityGraph.vline(eval_data["Contact_Time"].item(), "y")
+        self.ui.velocityGraph.vline(eval_data["Accel_Thresh_Trig_Time"].item(), "m")
+
         self.ui.accelGraph.plot(data, "Time", "Acceleration_Smooth", "Time", "Acceleration", "s", "m/s^2", "g", si_prefix=False)
         self.ui.accelGraph.scatter(data, "Time", "Acceleration", "Time", "Acceleration", "s", "m/s^2", "r")
-        self.ui.accelGraph.vline(eval_data["Contact_Time"].item(), "y")
+        # self.ui.accelGraph.vline(eval_data["Contact_Time"].item(), "y")
         self.ui.accelGraph.hline(eval_data["Accel_Thresh"].item(), "m")
         self.ui.accelGraph.vline(eval_data["Accel_Thresh_Trig_Time"].item(), "m")
 
