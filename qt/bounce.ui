@@ -290,50 +290,59 @@
                <property name="sizeHint" stdset="0">
                 <size>
                  <width>40</width>
-                 <height>20</height>
+                 <height>5</height>
                 </size>
                </property>
               </spacer>
-             </item>
-             <item row="1" column="1">
-              <widget class="QLabel" name="corLbl">
-               <property name="text">
-                <string>TextLabel</string>
-               </property>
-              </widget>
-             </item>
-             <item row="0" column="0">
-              <widget class="QLabel" name="label_2">
-               <property name="text">
-                <string>Max Deformation:</string>
-               </property>
-              </widget>
-             </item>
-             <item row="1" column="0">
-              <widget class="QLabel" name="label_4">
-               <property name="text">
-                <string>COR</string>
-               </property>
-              </widget>
-             </item>
-             <item row="0" column="1">
-              <widget class="QLabel" name="maxDeformLbl">
-               <property name="text">
-                <string>TextLabel</string>
-               </property>
-              </widget>
              </item>
              <item row="2" column="0">
               <widget class="QLabel" name="label_6">
                <property name="text">
                 <string>Max Acceleration</string>
                </property>
+               <property name="alignment">
+                <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="1">
+              <widget class="QLabel" name="corLbl">
+               <property name="text">
+                <string>0</string>
+               </property>
+              </widget>
+             </item>
+             <item row="0" column="1">
+              <widget class="QLabel" name="maxDeformLbl">
+               <property name="text">
+                <string>0</string>
+               </property>
+              </widget>
+             </item>
+             <item row="0" column="0">
+              <widget class="QLabel" name="label_2">
+               <property name="text">
+                <string>Max Deformation</string>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+               </property>
               </widget>
              </item>
              <item row="2" column="1">
               <widget class="QLabel" name="maxAccelLbl">
                <property name="text">
-                <string>TextLabel</string>
+                <string>0</string>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="0">
+              <widget class="QLabel" name="label_4">
+               <property name="text">
+                <string>COR (Vo/Vi)</string>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
                </property>
               </widget>
              </item>
@@ -474,6 +483,7 @@
     </property>
     <addaction name="actionOpen"/>
     <addaction name="actionPreferences"/>
+    <addaction name="actionBatch_Process"/>
    </widget>
    <addaction name="menuFile"/>
   </widget>
@@ -496,6 +506,11 @@
   <action name="actionDelete_Scale">
    <property name="text">
     <string>Delete Scale</string>
+   </property>
+  </action>
+  <action name="actionBatch_Process">
+   <property name="text">
+    <string>Batch Process</string>
    </property>
   </action>
  </widget>

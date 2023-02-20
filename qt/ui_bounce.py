@@ -41,6 +41,8 @@ class Ui_Bounce(object):
         self.actionCalibrate_Scale.setObjectName(u"actionCalibrate_Scale")
         self.actionDelete_Scale = QAction(Bounce)
         self.actionDelete_Scale.setObjectName(u"actionDelete_Scale")
+        self.actionBatch_Process = QAction(Bounce)
+        self.actionBatch_Process.setObjectName(u"actionBatch_Process")
         self.centralwidget = QWidget(Bounce)
         self.centralwidget.setObjectName(u"centralwidget")
         self.horizontalLayout_2 = QHBoxLayout(self.centralwidget)
@@ -228,39 +230,42 @@ class Ui_Bounce(object):
         self.groupBox.setObjectName(u"groupBox")
         self.gridLayout = QGridLayout(self.groupBox)
         self.gridLayout.setObjectName(u"gridLayout")
-        self.horizontalSpacer_3 = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
+        self.horizontalSpacer_3 = QSpacerItem(40, 5, QSizePolicy.Expanding, QSizePolicy.Minimum)
 
         self.gridLayout.addItem(self.horizontalSpacer_3, 0, 2, 1, 1)
+
+        self.label_6 = QLabel(self.groupBox)
+        self.label_6.setObjectName(u"label_6")
+        self.label_6.setAlignment(Qt.AlignRight|Qt.AlignTrailing|Qt.AlignVCenter)
+
+        self.gridLayout.addWidget(self.label_6, 2, 0, 1, 1)
 
         self.corLbl = QLabel(self.groupBox)
         self.corLbl.setObjectName(u"corLbl")
 
         self.gridLayout.addWidget(self.corLbl, 1, 1, 1, 1)
 
-        self.label_2 = QLabel(self.groupBox)
-        self.label_2.setObjectName(u"label_2")
-
-        self.gridLayout.addWidget(self.label_2, 0, 0, 1, 1)
-
-        self.label_4 = QLabel(self.groupBox)
-        self.label_4.setObjectName(u"label_4")
-
-        self.gridLayout.addWidget(self.label_4, 1, 0, 1, 1)
-
         self.maxDeformLbl = QLabel(self.groupBox)
         self.maxDeformLbl.setObjectName(u"maxDeformLbl")
 
         self.gridLayout.addWidget(self.maxDeformLbl, 0, 1, 1, 1)
 
-        self.label_6 = QLabel(self.groupBox)
-        self.label_6.setObjectName(u"label_6")
+        self.label_2 = QLabel(self.groupBox)
+        self.label_2.setObjectName(u"label_2")
+        self.label_2.setAlignment(Qt.AlignRight|Qt.AlignTrailing|Qt.AlignVCenter)
 
-        self.gridLayout.addWidget(self.label_6, 2, 0, 1, 1)
+        self.gridLayout.addWidget(self.label_2, 0, 0, 1, 1)
 
         self.maxAccelLbl = QLabel(self.groupBox)
         self.maxAccelLbl.setObjectName(u"maxAccelLbl")
 
         self.gridLayout.addWidget(self.maxAccelLbl, 2, 1, 1, 1)
+
+        self.label_4 = QLabel(self.groupBox)
+        self.label_4.setObjectName(u"label_4")
+        self.label_4.setAlignment(Qt.AlignRight|Qt.AlignTrailing|Qt.AlignVCenter)
+
+        self.gridLayout.addWidget(self.label_4, 1, 0, 1, 1)
 
 
         self.verticalLayout_3.addWidget(self.groupBox)
@@ -364,6 +369,7 @@ class Ui_Bounce(object):
         self.menubar.addAction(self.menuFile.menuAction())
         self.menuFile.addAction(self.actionOpen)
         self.menuFile.addAction(self.actionPreferences)
+        self.menuFile.addAction(self.actionBatch_Process)
 
         self.retranslateUi(Bounce)
 
@@ -379,6 +385,7 @@ class Ui_Bounce(object):
         self.actionPreferences.setText(QCoreApplication.translate("Bounce", u"Preferences", None))
         self.actionCalibrate_Scale.setText(QCoreApplication.translate("Bounce", u"Calibrate Scale", None))
         self.actionDelete_Scale.setText(QCoreApplication.translate("Bounce", u"Delete Scale", None))
+        self.actionBatch_Process.setText(QCoreApplication.translate("Bounce", u"Batch Process", None))
         self.statusLbl.setText(QCoreApplication.translate("Bounce", u"TextLabel", None))
         self.playBtn.setText(QCoreApplication.translate("Bounce", u"\u25ba", None))
         self.pauseBtn.setText(QCoreApplication.translate("Bounce", u"||", None))
@@ -393,12 +400,12 @@ class Ui_Bounce(object):
         self.label.setText(QCoreApplication.translate("Bounce", u"Log:", None))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.videoTab), QCoreApplication.translate("Bounce", u"Video", None))
         self.groupBox.setTitle(QCoreApplication.translate("Bounce", u"Info", None))
-        self.corLbl.setText(QCoreApplication.translate("Bounce", u"TextLabel", None))
-        self.label_2.setText(QCoreApplication.translate("Bounce", u"Max Deformation:", None))
-        self.label_4.setText(QCoreApplication.translate("Bounce", u"COR", None))
-        self.maxDeformLbl.setText(QCoreApplication.translate("Bounce", u"TextLabel", None))
         self.label_6.setText(QCoreApplication.translate("Bounce", u"Max Acceleration", None))
-        self.maxAccelLbl.setText(QCoreApplication.translate("Bounce", u"TextLabel", None))
+        self.corLbl.setText(QCoreApplication.translate("Bounce", u"0", None))
+        self.maxDeformLbl.setText(QCoreApplication.translate("Bounce", u"0", None))
+        self.label_2.setText(QCoreApplication.translate("Bounce", u"Max Deformation", None))
+        self.maxAccelLbl.setText(QCoreApplication.translate("Bounce", u"0", None))
+        self.label_4.setText(QCoreApplication.translate("Bounce", u"COR (Vo/Vi)", None))
         self.saveDataBtn_2.setText(QCoreApplication.translate("Bounce", u"Save Data", None))
         self.saveDataAsBtn.setText(QCoreApplication.translate("Bounce", u"Save Data As", None))
         self.deleteDataBtn.setText(QCoreApplication.translate("Bounce", u"Delete Data", None))
