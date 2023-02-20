@@ -16,9 +16,12 @@
 
 from PySide6.QtWidgets import QFileDialog, QProgressDialog
 from PySide6.QtCore import Signal, Slot, QObject
+
 from ui_bounce import Ui_Bounce
 from video_controller import VideoController
 from data_control import DataControl
+from qthread_worker import Worker
+
 import numpy as np
 import pandas as pd
 import cv2
@@ -34,15 +37,14 @@ class VideoEvaluator(QObject):
         self.ui: Ui_Bounce = ui
         self._video_controller = controller
         self._data_control = data_control
-        self._progress: QProgressDialog = None
         self._thread = None
         self.update_progress_signal.connect(self.update_progress)
 
     def video_eval(self):
         self.prep_progress()
-        # self._thread = threading.Thread(target=self.do_video_eval)
-        # self._thread.start()
-        self.do_video_eval()
+        self._thread = Worker(self.do_video_eval)
+        self._thread.start()
+        # self.do_video_eval()
 
     def do_video_eval(self):
            
@@ -50,78 +52,72 @@ class VideoEvaluator(QObject):
         N = self._video_controller.reader.number_of_frames
         dt =  1/self._video_controller.reader.frame_rate
         pixel_scale = (0.0000197)#self._video_controller.reader.pixel_scale
+        # contact_idx = self._video_controller.contact_frame
+        # contact_x, contact_y = self._video_controller.contact_pos
+        # contact_time = dt*contact_idx
+        # contact_mm = contact_y * pixel_scale
+        accel_thresh = -abs(self.ui.accelThreshSpin.value())
        
-        streak = np.zeros((N,h), dtype=np.uint16)
+        # streak = np.zeros((N,h), dtype=np.uint16)
 
-        for i in range(N):
-            streak[i] =  self._video_controller.reader._vr[i,:,w//2]
+        # for i in range(N):
+        #     streak[i] =  self._video_controller.reader._vr[i,:,contact_x]
+        # streak = streak.T
+        streak = self._video_controller.reader._vr.min(axis=2).T
+        contour = self.find_contour(streak)
 
-        streak = streak.T
-        cvimg = 4096 - streak
-        cvimg = cv2.medianBlur(cvimg, 5)#
-
-        _, cvimg = cv2.threshold(cvimg, 1, 255, type=cv2.THRESH_BINARY_INV)
-        contours, _ = cv2.findContours(cvimg.astype(np.uint8), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
-
-        # get the contour that has the least mean y value, which should be the upper most contour
-        avg_y = [cont.T[1].mean() for cont in contours]
-        idx = np.argmin(avg_y)
-        contour = np.asarray(contours[idx]).squeeze().T
-
-        # remove contour parts that touch the image border
-        del_pos = np.argwhere(contour[1]==0)
-        contour = np.delete(contour.T, del_pos, axis=0).T
-
-        # remove duplicate x values
-        unique_x, idx = np.unique(contour[0], return_index=True)
-        contour_clean = contour.T[idx].T
+        contour_clean = self.clean_contour(contour, N)
 
         distance = np.array([contour_clean[0]*dt, contour_clean[1]*pixel_scale])
+        distance_f = savgol_filter(distance[1], 21, 5, mode="interp")
+        # distance_f = uniform_filter1d(distance[1],8)
 
         velocity = np.gradient(distance[1], distance[0])
-
-        down = np.argwhere(velocity < -10)
-        up = np.argwhere(velocity > 10)
-        contact_idx = self._video_controller.contact_frame
-        contact_x, contact_y = self._video_controller.contact_pos
-        contact_time = dt*contact_idx
-        contact_y *= pixel_scale
-        accel_thresh = -abs(self.ui.accelThreshSpin.value())
-
-        velocity_f = uniform_filter1d(velocity, 10)
-        velocity_fs = savgol_filter(velocity, 21, 5, mode="nearest")
+        velocity_fs = np.gradient(distance_f, distance[0])#savgol_filter(velocity, 21, 5, mode="nearest")
+        # velocity = np.diff(distance)
+        # velocity_fs = np.diff(distance_f)
         max_dist = distance[1].argmax()
 
-
+        # linefit on distance before and after hit for velocity detection
         dist_linefit_down = Polynomial(P.polyfit(distance.T[:max_dist].T[0],distance.T[:max_dist].T[1],deg=1))
-        dist_linefit_up = Polynomial(P.polyfit(distance.T[max_dist:max_dist+20].T[0],distance.T[max_dist:max_dist+20].T[1],deg=1))
+        dist_linefit_up = Polynomial(P.polyfit(distance.T[max_dist:max_dist+80].T[0],distance.T[max_dist:max_dist+80].T[1],deg=1))
 
-        accel = np.gradient(velocity_f, distance[0])
-        accel_s = np.gradient(velocity_fs, distance[0])
-        accel_f = savgol_filter(accel_s, 21, 5, mode="constant")
+        accel = np.gradient(velocity, distance[0])
+        accel_fs = np.gradient(velocity_fs, distance[0])
+        # accel_fs = savgol_filter(accel_s, 21, 5, mode="constant")
+        # accel = np.diff(velocity)
+        # accel_fs = np.diff(velocity_fs)
+
+        # #fill diffed arrays to plot them correctly
+        # velocity = np.append(velocity, [velocity[-1]])
+        # velocity_fs = np.append(velocity_fs, [velocity_fs[-1]])
+
+        # accel = np.append(accel, [accel[-1]]*2)
+        # accel_fs = np.append(accel_fs, [accel_fs[-1]]*2)
+ 
 
         # jerk = np.gradient(accel_f, distance[0])
 
-        touch_point = (np.argwhere(accel_f[contact_idx//2:]<=accel_thresh)[0] + contact_idx//2).item()
+        touch_point = (np.argwhere(accel_fs<=accel_thresh)[0]).item()
         touch_time = touch_point*dt + distance[0][0]
 
         max_deformation = np.abs(distance[1][touch_point] - distance[1].max()).squeeze()
         cof = abs(dist_linefit_up.coef[1] / dist_linefit_down.coef[1])
-        max_acc = np.abs(accel_f).max()
+        max_acc = np.abs(accel_fs).max()
 
         time_data = pd.DataFrame()
         eval_data = pd.DataFrame()
 
         time_data["Time"] = distance[0]
-        time_data["Distance"] = distance[1]
+        time_data["Distance"] = distance_f
         time_data["Velocity"] = velocity
         time_data["Acceleration"] = accel
         time_data["Velocity_Smooth"] = velocity_fs
-        time_data["Acceleration_Smooth"] = accel_f
-        time_data["Contact_Time"] = contact_time
-        time_data["Contact_Idx"] = contact_idx
-        time_data["Contact_Pos_X"] = contact_x
-        time_data["Contact_Pos_Y"] = contact_y
+        time_data["Acceleration_Smooth"] = accel_fs
+        # time_data["Contact_Time"] = contact_time
+        # time_data["Contact_Idx"] = contact_idx
+        # time_data["Contact_Pos_X"] = contact_x
+        # time_data["Contact_Pos_Y"] = contact_y
         time_data["Accel_Thresh"] = accel_thresh
         time_data["Accel_Thresh_Trig_Idx"] = touch_point
         time_data["Accel_Thresh_Trig_Time"] = touch_time
@@ -153,15 +149,17 @@ class VideoEvaluator(QObject):
         eval_data["Accel_Thresh_Trig_Time"] = touch_time
         eval_data["Max_Deformation"] = max_deformation
         eval_data["COR"] = cof
+        eval_data["Speed_In"] = dist_linefit_down.coef[1]
+        eval_data["Speed_Out"] = dist_linefit_up.coef[1]
         eval_data["Max_Acceleration"] = max_acc
         eval_data["Material"] = material
         eval_data["Drop_Height"] = height
         eval_data["Magnet"] = magnet
         eval_data["Lamella_Spacing"] = spacing    
-        eval_data["Contact_Time"] = contact_time
-        eval_data["Contact_Idx"] = contact_idx
-        eval_data["Contact_Pos_X"] = contact_x
-        eval_data["Contact_Pos_Y"] = contact_y
+        # eval_data["Contact_Time"] = contact_time
+        # eval_data["Contact_Idx"] = contact_idx
+        # eval_data["Contact_Pos_X"] = contact_x
+        # eval_data["Contact_Pos_Y"] = contact_y
         eval_data["Video_Framerate"] = self._video_controller.reader.frame_rate
         eval_data["Video_Res"] = f"{w}x{h}"
         eval_data["Video_Num_Frames"] = N
@@ -169,6 +167,35 @@ class VideoEvaluator(QObject):
 
         self._data_control.update_data_signal.emit(time_data, eval_data, contour_clean, streak)
         self.update_progress_signal.emit(1)
+
+    def find_contour(self, img):
+        
+        cvimg = 4096 - img
+        cvimg = cv2.medianBlur(cvimg, 5)#
+
+        _, cvimg = cv2.threshold(cvimg, 180, 255, type=cv2.THRESH_BINARY_INV)
+        contours, _ = cv2.findContours(cvimg.astype(np.uint8), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+
+        # get the contour that has the least mean y value, which should be the upper most contour
+        avg_y = [cont.T[1].mean() for cont in contours]
+        idx = np.argmin(avg_y)
+        contour = np.asarray(contours[idx]).squeeze().T
+        return contour
+
+    def clean_contour(self, contour, num_frames):
+        # remove contour parts that touch the image border
+        del_pos = np.argwhere(contour[1]==0)
+        contour = np.delete(contour.T, del_pos, axis=0).T
+        del_pos = np.argwhere(contour[0]==0)
+        contour = np.delete(contour.T, del_pos, axis=0).T
+        del_pos = np.argwhere(contour[0]==(num_frames-1))
+        contour = np.delete(contour.T, del_pos, axis=0).T
+        #remove beginning and end, possible artifacts
+        contour = contour.T[5:-5].T
+        # remove duplicate x values
+        _, idx = np.unique(contour[0], return_index=True)
+        contour_clean = contour.T[idx].T
+        return contour_clean
 
     def prep_progress(self):
         pbar = self.parent().window().progressBar
@@ -178,15 +205,3 @@ class VideoEvaluator(QObject):
     def update_progress(self, frac):
         pbar = self.parent().window().progressBar
         pbar.setValue(int(frac*100))
-
-    def get_data(self):
-        return self.data_frame
-
-    def save_data(self, filename):
-        self.data_frame.to_csv(filename, sep='\t', header=True, index=False)
-
-    def save_dialog(self):
-        dlg = QFileDialog.getSaveFileName(parent=self.parent(), caption="Save Data", dir=f"D:/Messungen/Angle_Measurements/{self._video_controller.video_name}.csv", filter="Comma Separated Values (*.csv)")
-        if dlg:
-            self.save_data(dlg[0])
-        
