@@ -18,18 +18,45 @@ import sys
 sys.path.append('src')
 sys.path.append('qt')
 import logging
+import traceback
+from pathlib import Path
 #silences error on program quit, as handler is deleted before logger
 logging.raiseExceptions = False
 logging.getLogger("numba").setLevel(logging.WARNING)
+
 from PySide6 import QtGui
 from PySide6.QtGui import QShortcut, QFont
-from PySide6.QtWidgets import QMainWindow, QApplication, QProgressBar
-from PySide6.QtCore import QCoreApplication
+from PySide6.QtWidgets import QMainWindow, QApplication, QProgressBar, QMessageBox, QDialog, QFileDialog
+from PySide6.QtCore import QCoreApplication, Qt
 
 from ui_bounce import Ui_Bounce
+from ui_patterndlg import Ui_PatternDialog
 from video_controller import VideoController
 from video_evaluator import VideoEvaluator
 from data_control import DataControl
+
+class PatternDialog(QDialog, Ui_PatternDialog):
+    def __init__(self, parent=None):
+        QDialog.__init__(self, parent=parent)
+        self.setupUi(self)
+        self.openBtn.clicked.connect(self.open_path)
+        self.buttonBox.accepted.connect(lambda: self.quit(True))
+        self.buttonBox.rejected.connect(lambda: self.quit(False))
+
+    def open_path(self):
+        pth = QFileDialog.getExistingDirectory(self,"Select root directory", "D:/Messungen/")
+        self.rootPathTxt.setText(pth)
+
+    @property
+    def values(self):
+        return (self.rootPathTxt.text(), self.patternTxt.text())
+
+    def quit(self, accepted):
+        if accepted:
+            self.accept()
+        else:
+            self.reject()
+
 
 class BounceAnalyzer(QMainWindow, Ui_Bounce):
     def __init__(self):
@@ -49,7 +76,6 @@ class BounceAnalyzer(QMainWindow, Ui_Bounce):
         self.tabWidget.setCurrentIndex(0)
         self.register_action_events()
 
-
     def closeEvent(self, event):
         self.videoViewer.closeEvent(event)
         return super().closeEvent(event)
@@ -60,8 +86,9 @@ class BounceAnalyzer(QMainWindow, Ui_Bounce):
         self.seekBar.sliderMoved.connect(self.videoController.update_position)
         self.startEvalBtn.clicked.connect(self.evaluator.video_eval)
         self.actionOpen.triggered.connect(self.videoController.open_file)
+        self.actionBatch_Process.triggered.connect(self.start_batch_process)
         
-        self.saveDataBtn.clicked.connect(self.evaluator.save_dialog)
+        self.saveDataBtn.clicked.connect(self.data_control.save_dialog)
 
         # self.actionCalibrate_Scale.triggered.connect(self.videoController.calib_size)
         # self.actionDelete_Scale.triggered.connect(self.videoController.remove_size_calib)
@@ -69,14 +96,45 @@ class BounceAnalyzer(QMainWindow, Ui_Bounce):
         QShortcut(QtGui.QKeySequence("Space"), self, self.videoController.play_pause)
         QShortcut(QtGui.QKeySequence("Ctrl+S"), self, lambda: self.videoController.save_current_frame())
 
+    def start_batch_process(self):
+        dlg = PatternDialog(parent=self)
+        if dlg.exec():
+            root, pattern = dlg.values
+            self.batch_process(root, pattern)
+
+        
+    def batch_process(self, root, pattern):
+        glb = Path(root).rglob(pattern)
+        for f in glb:
+            try:
+                self.auto_process(f)
+            except Exception as e:
+                res = QMessageBox.question(self,"Error encountered!", f"While prosessing the program encountered an error. Continue?\n\nError:\n{traceback.print_exc()}")
+                if res == QMessageBox.StandardButton.Yes:
+                    continue
+                else:
+                    return
+                
+            QApplication.processEvents()
+
+    def auto_process(self, filename):
+        logging.info(f"Process file {filename}")
+        self.data_control.save_on_data_event = True
+        self.videoController.load_video(filename)
+        self.evaluator.video_eval()
+        # self.data_control.save_data()
+
+
+
 
 
 class App(QApplication):
-    def __init__(self, *args, **kwargs):
-        super(App,self).__init__(*args, **kwargs)
-
+    def __init__(self, argv, *args, **kwargs):
+        super(App,self).__init__(*args, **kwargs)            
         self.window = BounceAnalyzer()
         self.window.show()
+        
+
 
 def initialize_logger(out_dir, handlers=None):
     logger = logging.getLogger("bounce")

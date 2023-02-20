@@ -1,6 +1,4 @@
 
-- Batch processing
-
 - pixel scaling, determine from video and ball size
 - store pixel scale in data control
 

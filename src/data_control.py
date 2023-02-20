@@ -53,6 +53,8 @@ class DataControl(QObject):
         self._first_show = True
         self.video_path: Path = None
 
+        self.save_on_data_event = False
+
         self.ui: Ui_Bounce = self.parent()
         self.connect_signals()  
 
@@ -105,6 +107,9 @@ class DataControl(QObject):
         self.ui.maxAccelLbl.setText(f'{eval_data["Max_Acceleration"].item():0.1f} m/s^2')
 
         self.ui.tabWidget.setCurrentIndex(1)
+        if self.save_on_data_event:
+            self.save_data()
+            self.save_on_data_event = False
 
     def clear_plots(self):
         self.ui.streakImage.clear()
