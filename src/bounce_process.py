@@ -37,6 +37,7 @@ from ui_patterndlg import Ui_PatternDialog
 from video_controller import VideoController
 from video_evaluator import VideoEvaluator
 from data_control import DataControl
+from qthread_worker import Worker
 
 class PatternDialog(QDialog, Ui_PatternDialog):
     def __init__(self, parent=None):
@@ -74,6 +75,8 @@ class BounceAnalyzer(QMainWindow, Ui_Bounce):
         self.videoController = VideoController(self)
         self.data_control = DataControl(self.videoController, self)
         self.evaluator = VideoEvaluator(self.videoController, self.data_control, self, parent=self)
+        self.batch_done = False
+        self.batch_thread = None
 
         self.videoController.load_video("data/ball_12bit_full.cihx")
         self.tabWidget.setCurrentIndex(0)
@@ -88,6 +91,7 @@ class BounceAnalyzer(QMainWindow, Ui_Bounce):
         self.pauseBtn.clicked.connect(self.videoController.pause)
         self.seekBar.sliderMoved.connect(self.videoController.update_position)
         self.pxScaleSpin.valueChanged.connect(self.data_control.update_scale)
+        self.ballSizeSpin.valueChanged.connect(self.data_control.update_ball_size)
         self.startEvalBtn.clicked.connect(self.evaluator.video_eval)
         self.actionOpen.triggered.connect(self.videoController.open_file)
         self.actionBatch_Process.triggered.connect(self.start_batch_process)
@@ -104,8 +108,11 @@ class BounceAnalyzer(QMainWindow, Ui_Bounce):
         dlg = PatternDialog(parent=self)
         if dlg.exec():
             root, pattern = dlg.values
-            self.batch_process(root, pattern)
+            self.batch_thread = Worker(self.batch_process, root, pattern)
+            self.batch_thread.start()
 
+    def set_done(self):
+        self.batch_done = True
         
     def batch_process(self, root, pattern):
         glb = Path(root).rglob(pattern)
@@ -125,8 +132,9 @@ class BounceAnalyzer(QMainWindow, Ui_Bounce):
         logging.info(f"Process file {filename}")
         self.data_control.save_on_data_event = True
         self.videoController.load_video(filename)
-        self.evaluator.video_eval()
-        # self.data_control.save_data()
+        self.evaluator.video_eval(callback=self.set_done)
+        while not self.batch_done: pass
+        self.batch_done = False
 
 
 

@@ -105,7 +105,8 @@ class DataControl(QObject):
         # TODO add scatter overly for live plot widget, etc, do all datahandling in this datacontrol
         self.ui.streakImage.set_image(strk_img)
         self.ui.streakImage.plot(contour, 0, 1, "", "","","","r")
-        self.ui.distanceGraph.plot(data, "Time", "Distance", "Time", "Distance", "s", "m", "g")
+        self.ui.distanceGraph.plot(data, "Time", "Distance", "Time", "Distance", "s", "m", "r")
+        self.ui.distanceGraph.plot(data, "Time", "Distance_Smooth", "Time", "Distance", "s", "m", "g")
         # self.ui.distanceGraph.vline(eval_data["Contact_Time"].item(), "y")
 
         self.ui.distanceGraph.vline(eval_data["Accel_Thresh_Trig_Time"].item(), "m")

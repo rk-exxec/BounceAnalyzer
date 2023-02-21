@@ -20,13 +20,13 @@ from PySide6.QtCore import Signal, Slot, QObject
 from ui_bounce import Ui_Bounce
 from video_controller import VideoController
 from data_control import DataControl
-from qthread_worker import Worker
+from qthread_worker import Worker, CallbackWorker
 
 import numpy as np
 import pandas as pd
 import cv2
 from scipy.ndimage import uniform_filter1d
-from scipy.signal import savgol_filter
+from scipy.signal import savgol_filter, wiener
 from numpy.polynomial import Polynomial
 from numpy.polynomial import polynomial as P
 
@@ -40,9 +40,12 @@ class VideoEvaluator(QObject):
         self._thread = None
         self.update_progress_signal.connect(self.update_progress)
 
-    def video_eval(self):
+    def video_eval(self, callback=None):
         self.prep_progress()
-        self._thread = Worker(self.do_video_eval)
+        if callback: 
+            self._thread = CallbackWorker(self.do_video_eval, slotOnFinished=callback)
+        else:
+            self._thread = Worker(self.do_video_eval)
         self._thread.start()
         # self.do_video_eval()
 
@@ -64,12 +67,19 @@ class VideoEvaluator(QObject):
         #     streak[i] =  self._video_controller.reader._vr[i,:,contact_x]
         # streak = streak.T
         streak = self._video_controller.reader._vr.min(axis=2).T
+
         contour = self.find_contour(streak)
 
         contour_clean = self.clean_contour(contour, N)
 
+        if not self._data_control.pixel_scale:
+            pixel_scale = self.get_scale(streak, contour_clean[0][0])
+        else: pixel_scale = self._data_control.pixel_scale
+
         distance = np.array([contour_clean[0]*dt, contour_clean[1]*pixel_scale])
-        distance_f = savgol_filter(distance[1], 21, 5, mode="interp")
+        # 
+        distance_f = savgol_filter(distance[1], 21, 4, mode="interp")
+        # distance_f = wiener(distance[1], 31)
         # distance_f = uniform_filter1d(distance[1],8)
 
         velocity = np.gradient(distance[1], distance[0])
@@ -109,9 +119,10 @@ class VideoEvaluator(QObject):
         eval_data = pd.DataFrame()
 
         time_data["Time"] = distance[0]
-        time_data["Distance"] = distance_f
+        time_data["Distance"] = distance[1]
         time_data["Velocity"] = velocity
         time_data["Acceleration"] = accel
+        time_data["Distance_Smooth"] = distance_f
         time_data["Velocity_Smooth"] = velocity_fs
         time_data["Acceleration_Smooth"] = accel_fs
         # time_data["Contact_Time"] = contact_time
@@ -169,6 +180,7 @@ class VideoEvaluator(QObject):
 
         self._data_control.update_data_signal.emit(time_data, eval_data, contour_clean, streak)
         self.update_progress_signal.emit(1)
+
 
     def find_contour(self, img):
         
