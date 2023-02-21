@@ -171,7 +171,7 @@ class DataControl(QObject):
         filename = Path(filename)
         if not self.data.empty: self.data.to_csv(filename, sep='\t', header=True, index=False)
         if not self.eval_data.empty: self.eval_data.to_csv(filename.parent/(filename.stem + "_eval.csv"), sep='\t', header=True, index=False)
-        if self.streak_image: Image.fromarray(self.streak_image).save(filename.with_stem(filename.stem + "_streak").with_suffix(".png"))
+        if self.streak_image is not None: Image.fromarray(self.streak_image).save(filename.with_stem(filename.stem + "_streak").with_suffix(".png"))
 
     def save_dialog(self):
         dlg = QFileDialog.getSaveFileName(parent=self.parent(), caption="Save Data", dir=str(self.video_path.with_suffix(".csv")), filter="Comma Separated Values (*.csv)")
