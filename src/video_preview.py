@@ -24,11 +24,9 @@ from PySide6.QtGui import QBrush, QImage, QPainter, QPen, QPixmap
 
 class VideoPreview(QOpenGLWidget):
     update_contact_pos_event = Signal(int,int)
-    file_drop_event = Signal(list)
     def __init__(self, parent=None):
         super().__init__(parent)
         self._double_buffer: QImage = None
-        self.setAcceptDrops(True)
         self._pixmap = None
         self._raw_image = None
         self._image = None
@@ -37,29 +35,6 @@ class VideoPreview(QOpenGLWidget):
         self._has_mouse = False
         self._contact_pos = None
 
-    def dragEnterEvent(self, event: QtGui.QDragEnterEvent) -> None:
-        if event.mimeData().hasUrls:
-            event.accept()
-        else:
-            event.ignore()
-
-    def dragMoveEvent(self, event):
-        if event.mimeData().hasUrls:
-            event.setDropAction(Qt.CopyAction)
-            event.accept()
-        else:
-            event.ignore()
-
-    def dropEvent(self, event: QtGui.QDropEvent) -> None:
-        if event.mimeData().hasUrls:
-            event.setDropAction(Qt.CopyAction)
-            event.accept()
-            links = []
-            for url in event.mimeData().urls():
-                links.append(str(url.toLocalFile()))
-            self.file_drop_event.emit(links)
-        else:
-            event.ignore()
 
     def update_image(self, im: np.ndarray):
         self._raw_image = im

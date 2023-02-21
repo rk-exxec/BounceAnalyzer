@@ -38,7 +38,6 @@ class VideoController(QObject):
         super().__init__(parent=parent)
         self.ui = parent
         self.player: VideoPreview = self.ui.videoViewer
-        self.player.file_drop_event.connect(self.file_dropped)
         self.player.update_contact_pos_event.connect(self.update_contact_pos)
         # self.reader: VideoReader = None
         self.reader: VideoReaderMem = None
@@ -106,12 +105,6 @@ class VideoController(QObject):
     def open_file(self):
         path,_ = QFileDialog.getOpenFileName(self.ui.centralwidget, "Select Video File", r"G:\Messungen", "Video Files (*.avi *.mp4 *.mkv *.m4a *.webm *.flv *.wmv)")
         self.load_video(path)
-
-    @Slot(list)
-    def file_dropped(self, files):
-        if os.path.exists(files[0]):
-            logging.info(f"Loading file {files[0]}")
-            self.load_video(files[0])
 
     def load_video(self, path):
         # self.reader = VideoReader(str(path))

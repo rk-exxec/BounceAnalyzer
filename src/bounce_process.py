@@ -14,7 +14,7 @@
 #     You should have received a copy of the GNU General Public License
 #     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import sys
+import os, sys
 sys.path.append('src')
 sys.path.append('qt')
 import logging
@@ -30,7 +30,7 @@ warnings.filterwarnings('ignore', module='pyMRAW')
 from PySide6 import QtGui
 from PySide6.QtGui import QShortcut, QFont
 from PySide6.QtWidgets import QMainWindow, QApplication, QProgressBar, QMessageBox, QDialog, QFileDialog
-from PySide6.QtCore import QCoreApplication, Qt
+from PySide6.QtCore import QCoreApplication, Qt, Signal, Slot
 
 from ui_bounce import Ui_Bounce
 from ui_patterndlg import Ui_PatternDialog
@@ -63,6 +63,7 @@ class PatternDialog(QDialog, Ui_PatternDialog):
 
 
 class BounceAnalyzer(QMainWindow, Ui_Bounce):
+    file_drop_event = Signal(list)
     def __init__(self):
         QMainWindow.__init__(self)
         self.setupUi(self)
@@ -77,6 +78,7 @@ class BounceAnalyzer(QMainWindow, Ui_Bounce):
         self.evaluator = VideoEvaluator(self.videoController, self.data_control, self, parent=self)
         self.batch_done = False
         self.batch_thread = None
+        self.setAcceptDrops(True)
 
         self.videoController.load_video("data/ball_12bit_full.cihx")
         self.tabWidget.setCurrentIndex(0)
@@ -95,6 +97,7 @@ class BounceAnalyzer(QMainWindow, Ui_Bounce):
         self.startEvalBtn.clicked.connect(self.evaluator.video_eval)
         self.actionOpen.triggered.connect(self.videoController.open_file)
         self.actionBatch_Process.triggered.connect(self.start_batch_process)
+        self.file_drop_event.connect(self.file_dropped)
         
         self.saveDataBtn.clicked.connect(self.data_control.save_dialog)
 
@@ -103,6 +106,44 @@ class BounceAnalyzer(QMainWindow, Ui_Bounce):
         # shortcuts
         QShortcut(QtGui.QKeySequence("Space"), self, self.videoController.play_pause)
         QShortcut(QtGui.QKeySequence("Ctrl+S"), self, lambda: self.videoController.save_current_frame())
+
+    
+    def dragEnterEvent(self, event: QtGui.QDragEnterEvent) -> None:
+        if event.mimeData().hasUrls:
+            event.accept()
+        else:
+            event.ignore()
+
+    def dragMoveEvent(self, event):
+        if event.mimeData().hasUrls:
+            event.setDropAction(Qt.CopyAction)
+            event.accept()
+        else:
+            event.ignore()
+
+    def dropEvent(self, event: QtGui.QDropEvent) -> None:
+        if event.mimeData().hasUrls:
+            event.setDropAction(Qt.CopyAction)
+            event.accept()
+            links = []
+            for url in event.mimeData().urls():
+                links.append(str(url.toLocalFile()))
+            self.file_drop_event.emit(links)
+        else:
+            event.ignore()
+
+    @Slot(list)
+    def file_dropped(self, files):
+        if len(files)>1: QMessageBox.warning(self, "Warning", "Only first file will be loaded!")
+        file = Path(files[0])
+        if file.exists():
+            logging.info(f"Loading file {str(file)}")
+            if file.suffix == ".csv":
+                self.data_control.load_data(file)
+                self.tabWidget.setCurrentIndex(1)
+            else:
+                self.videoController.load_video(str(file))
+                self.tabWidget.setCurrentIndex(0)
 
     def start_batch_process(self):
         dlg = PatternDialog(parent=self)

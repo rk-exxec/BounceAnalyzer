@@ -32,6 +32,8 @@ from PySide6.QtCore import Signal, Slot, QObject
 
 from qthread_worker import Worker
 
+from PIL import Image
+
 from typing import TYPE_CHECKING
 
 from video_controller import VideoController
@@ -103,33 +105,46 @@ class DataControl(QObject):
         self.ui.tableView.redraw_table_signal.emit(data)
         self.clear_plots()
         # TODO add scatter overly for live plot widget, etc, do all datahandling in this datacontrol
-        self.ui.streakImage.set_image(strk_img)
-        self.ui.streakImage.plot(contour, 0, 1, "", "","","","r")
-        self.ui.distanceGraph.plot(data, "Time", "Distance", "Time", "Distance", "s", "m", "r")
-        self.ui.distanceGraph.plot(data, "Time", "Distance_Smooth", "Time", "Distance", "s", "m", "g")
-        # self.ui.distanceGraph.vline(eval_data["Contact_Time"].item(), "y")
 
-        self.ui.distanceGraph.vline(eval_data["Accel_Thresh_Trig_Time"].item(), "m")
-        self.ui.velocityGraph.plot(data, "Time", "Velocity_Smooth", "Time", "Velocity", "s", "m/s", "g")
-        self.ui.velocityGraph.scatter(data, "Time", "Velocity", "Time", "Velocity", "s", "m/s", "r")
-        # self.ui.velocityGraph.vline(eval_data["Contact_Time"].item(), "y")
-        self.ui.velocityGraph.vline(eval_data["Accel_Thresh_Trig_Time"].item(), "m")
-
-        self.ui.accelGraph.plot(data, "Time", "Acceleration_Smooth", "Time", "Acceleration", "s", "m/s^2", "g", si_prefix=False)
-        self.ui.accelGraph.scatter(data, "Time", "Acceleration", "Time", "Acceleration", "s", "m/s^2", "r")
-        # self.ui.accelGraph.vline(eval_data["Contact_Time"].item(), "y")
-        self.ui.accelGraph.hline(eval_data["Accel_Thresh"].item(), "m")
-        self.ui.accelGraph.vline(eval_data["Accel_Thresh_Trig_Time"].item(), "m")
-
-        self.ui.corLbl.setText(f"{eval_data['COR'].item():0.3f}")
-        self.ui.maxDeformLbl.setText(f'{eval_data["Max_Deformation"].item()*1000:0.3f} mm')
-        self.ui.maxAccelLbl.setText(f'{eval_data["Max_Acceleration"].item():0.1f} m/s^2')
-        self.ui.pxScaleLbl.setText(f'{eval_data["Pixel_Scale"].item()*1000:.5f} mm/px')
+        self.plot_image(strk_img, data)
+        self.plot_graphs(data)
+        self.set_accents(eval_data)
+        self.set_info(eval_data)
 
         self.ui.tabWidget.setCurrentIndex(1)
         if self.save_on_data_event:
             self.save_data()
             self.save_on_data_event = False
+
+    def plot_graphs(self, data: pd.DataFrame):
+
+        self.ui.distanceGraph.scatter(data, "Time", "Distance", "Time", "Distance", "s", "m", "r")
+        self.ui.distanceGraph.plot(data, "Time", "Distance_Smooth", "Time", "Distance", "s", "m", "g")
+        # self.ui.distanceGraph.vline(eval_data["Contact_Time"].item(), "y")
+
+        self.ui.velocityGraph.plot(data, "Time", "Velocity_Smooth", "Time", "Velocity", "s", "m/s", "g")
+        self.ui.velocityGraph.scatter(data, "Time", "Velocity", "Time", "Velocity", "s", "m/s", "r")
+        # self.ui.velocityGraph.vline(eval_data["Contact_Time"].item(), "y")
+
+        self.ui.accelGraph.plot(data, "Time", "Acceleration_Smooth", "Time", "Acceleration", "s", "m/s^2", "g", si_prefix=False)
+        self.ui.accelGraph.scatter(data, "Time", "Acceleration", "Time", "Acceleration", "s", "m/s^2", "r")
+        # self.ui.accelGraph.vline(eval_data["Contact_Time"].item(), "y")
+
+    def plot_image(self, streak, data):
+        self.ui.streakImage.set_image(streak)
+        self.ui.streakImage.plot(data, "Contour_x", "Contour_y", "", "","","","r")
+
+    def set_accents(self, data: pd.DataFrame):
+        self.ui.distanceGraph.vline(data["Accel_Thresh_Trig_Time"].item(), "m")
+        self.ui.velocityGraph.vline(data["Accel_Thresh_Trig_Time"].item(), "m")
+        self.ui.accelGraph.hline(data["Accel_Thresh"].item(), "m")
+        self.ui.accelGraph.vline(data["Accel_Thresh_Trig_Time"].item(), "m")
+
+    def set_info(self, data:pd.DataFrame):
+        self.ui.corLbl.setText(f"{data['COR'].item():0.3f}")
+        self.ui.maxDeformLbl.setText(f'{data["Max_Deformation"].item()*1000:0.3f} mm')
+        self.ui.maxAccelLbl.setText(f'{data["Max_Acceleration"].item():0.1f} m/s^2')
+        self.ui.pxScaleLbl.setText(f'{data["Pixel_Scale"].item()*1000:.5f} mm/px')
 
     def clear_plots(self):
         self.ui.streakImage.clear()
@@ -156,11 +171,41 @@ class DataControl(QObject):
         filename = Path(filename)
         if not self.data.empty: self.data.to_csv(filename, sep='\t', header=True, index=False)
         if not self.eval_data.empty: self.eval_data.to_csv(filename.parent/(filename.stem + "_eval.csv"), sep='\t', header=True, index=False)
+        if self.streak_image: Image.fromarray(self.streak_image).save(filename.with_stem(filename.stem + "_streak").with_suffix(".png"))
 
     def save_dialog(self):
         dlg = QFileDialog.getSaveFileName(parent=self.parent(), caption="Save Data", dir=str(self.video_path.with_suffix(".csv")), filter="Comma Separated Values (*.csv)")
         if dlg:
             self.save_data(dlg[0])
+
+    def load_data(self, file):
+        """ loads previously saved csv files
+        will also check if eval data csv is in same director and then load additionally
+        """
+        file = Path(file)
+        self.clear_plots()
+        eval_file = None
+        # check if the wrong file was dropped by accident, and correct file names
+        if file.stem.endswith("_eval"):
+            eval_file = file
+            file = Path(file.with_stem(file.stem[:-5]))
+        if file.exists():
+            data = pd.read_csv(file, sep="\t")
+            self.plot_graphs(data)
+
+        if not eval_file:   
+            eval_file = file.with_stem(file.stem + "_eval")
+        if eval_file.exists():
+            eval_data = pd.read_csv(eval_file, sep="\t")
+            self.set_accents(eval_data)
+            self.set_info(eval_data)
+
+        streak_path = file.with_stem(file.stem + "_streak").with_suffix(".png")
+        if streak_path.exists():
+            img = np.asarray(Image.open(streak_path))
+            self.plot_image(img, data)
+        
+
 
     def delete_data(self):
         self.data = pd.DataFrame()
