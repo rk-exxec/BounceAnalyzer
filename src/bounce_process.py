@@ -108,8 +108,9 @@ class BounceAnalyzer(QMainWindow, Ui_Bounce):
         dlg = PatternDialog(parent=self)
         if dlg.exec():
             root, pattern = dlg.values
-            self.batch_thread = Worker(self.batch_process, root, pattern)
-            self.batch_thread.start()
+            # self.batch_thread = Worker(self.batch_process, root, pattern)
+            # self.batch_thread.start()
+            self.batch_process(root, pattern)
 
     def set_done(self):
         self.batch_done = True
@@ -128,13 +129,16 @@ class BounceAnalyzer(QMainWindow, Ui_Bounce):
                 
             QApplication.processEvents()
 
+        QMessageBox.information(self, "Done", "Batch processing done!")
+
     def auto_process(self, filename):
         logging.info(f"Process file {filename}")
         self.data_control.save_on_data_event = True
         self.videoController.load_video(filename)
-        self.evaluator.video_eval(callback=self.set_done)
-        while not self.batch_done: pass
-        self.batch_done = False
+        self.evaluator.do_video_eval()
+        # self.evaluator.video_eval(callback=self.set_done)
+        # while not self.batch_done: pass
+        # self.batch_done = False
 
 
 
