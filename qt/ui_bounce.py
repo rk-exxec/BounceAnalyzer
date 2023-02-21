@@ -172,12 +172,12 @@ class Ui_Bounce(object):
 
         self.horizontalLayout_3.addWidget(self.label_7)
 
-        self.doubleSpinBox = QDoubleSpinBox(self.videoTab)
-        self.doubleSpinBox.setObjectName(u"doubleSpinBox")
-        self.doubleSpinBox.setDecimals(3)
-        self.doubleSpinBox.setValue(2.500000000000000)
+        self.ballSizeSpin = QDoubleSpinBox(self.videoTab)
+        self.ballSizeSpin.setObjectName(u"ballSizeSpin")
+        self.ballSizeSpin.setDecimals(3)
+        self.ballSizeSpin.setValue(2.500000000000000)
 
-        self.horizontalLayout_3.addWidget(self.doubleSpinBox)
+        self.horizontalLayout_3.addWidget(self.ballSizeSpin)
 
         self.horizontalSpacer = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
 
@@ -266,6 +266,17 @@ class Ui_Bounce(object):
         self.label_4.setAlignment(Qt.AlignRight|Qt.AlignTrailing|Qt.AlignVCenter)
 
         self.gridLayout.addWidget(self.label_4, 1, 0, 1, 1)
+
+        self.label_5 = QLabel(self.groupBox)
+        self.label_5.setObjectName(u"label_5")
+        self.label_5.setAlignment(Qt.AlignRight|Qt.AlignTrailing|Qt.AlignVCenter)
+
+        self.gridLayout.addWidget(self.label_5, 3, 0, 1, 1)
+
+        self.pxScaleLbl = QLabel(self.groupBox)
+        self.pxScaleLbl.setObjectName(u"pxScaleLbl")
+
+        self.gridLayout.addWidget(self.pxScaleLbl, 3, 1, 1, 1)
 
 
         self.verticalLayout_3.addWidget(self.groupBox)
@@ -373,7 +384,7 @@ class Ui_Bounce(object):
 
         self.retranslateUi(Bounce)
 
-        self.tabWidget.setCurrentIndex(0)
+        self.tabWidget.setCurrentIndex(1)
 
 
         QMetaObject.connectSlotsByName(Bounce)
@@ -395,7 +406,7 @@ class Ui_Bounce(object):
         self.pxScaleSpin.setSpecialValueText(QCoreApplication.translate("Bounce", u"Auto", None))
         self.pxScaleSpin.setSuffix(QCoreApplication.translate("Bounce", u" mm", None))
         self.label_7.setText(QCoreApplication.translate("Bounce", u"Ball Size", None))
-        self.doubleSpinBox.setSuffix(QCoreApplication.translate("Bounce", u" mm", None))
+        self.ballSizeSpin.setSuffix(QCoreApplication.translate("Bounce", u" mm", None))
         self.startEvalBtn.setText(QCoreApplication.translate("Bounce", u"Start Eval", None))
         self.label.setText(QCoreApplication.translate("Bounce", u"Log:", None))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.videoTab), QCoreApplication.translate("Bounce", u"Video", None))
@@ -406,6 +417,8 @@ class Ui_Bounce(object):
         self.label_2.setText(QCoreApplication.translate("Bounce", u"Max Deformation", None))
         self.maxAccelLbl.setText(QCoreApplication.translate("Bounce", u"0", None))
         self.label_4.setText(QCoreApplication.translate("Bounce", u"COR (Vo/Vi)", None))
+        self.label_5.setText(QCoreApplication.translate("Bounce", u"Pixel Scale", None))
+        self.pxScaleLbl.setText(QCoreApplication.translate("Bounce", u"0", None))
         self.saveDataBtn_2.setText(QCoreApplication.translate("Bounce", u"Save Data", None))
         self.saveDataAsBtn.setText(QCoreApplication.translate("Bounce", u"Save Data As", None))
         self.deleteDataBtn.setText(QCoreApplication.translate("Bounce", u"Delete Data", None))
