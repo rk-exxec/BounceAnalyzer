@@ -33,7 +33,7 @@ class VideoController(QObject):
     """ 
     controller for the video player
     """
-    loaded_video_signal = Signal(str)
+    loaded_video_signal = Signal(str, float)
     def __init__(self, parent=None):
         super().__init__(parent=parent)
         self.ui = parent
@@ -121,7 +121,7 @@ class VideoController(QObject):
         self.ui.seekBar.setMinimum(0)
         self.player.update_shape(self.reader.frame_shape)
         self.read_image(self.ui.seekBar.sliderPosition())
-        self.loaded_video_signal.emit(str(path))
+        self.loaded_video_signal.emit(str(path), self.reader.pixel_scale)
 
     
     def read_image(self, pos):

@@ -142,6 +142,7 @@ class VideoEvaluator(QObject):
         time_data["Video_Framerate"] = self._video_controller.reader.frame_rate
         time_data["Video_Res"] = f"{w}x{h}"
         time_data["Video_Num_Frames"] = N
+        time_data["Pixel_Scale"] = pixel_scale
         time_data["Video_Name"] = self._video_controller.reader._filename
 
         eval_data["Accel_Thresh"] = [accel_thresh]
@@ -151,6 +152,7 @@ class VideoEvaluator(QObject):
         eval_data["COR"] = cof
         eval_data["Speed_In"] = dist_linefit_down.coef[1]
         eval_data["Speed_Out"] = dist_linefit_up.coef[1]
+        eval_data["Pixel_Scale"] = pixel_scale
         eval_data["Max_Acceleration"] = max_acc
         eval_data["Material"] = material
         eval_data["Drop_Height"] = height
@@ -196,6 +198,15 @@ class VideoEvaluator(QObject):
         _, idx = np.unique(contour[0], return_index=True)
         contour_clean = contour.T[idx].T
         return contour_clean
+    
+    def get_scale(self, streak, contour_start):
+        line = streak.T[contour_start+5]
+        max_val = line.max()
+        first_dip = np.argmax(line<max_val)
+        first_rise = np.argmax(line[first_dip+1:] == max_val) + first_dip+1
+        px_delta = abs(first_rise - first_dip)
+        scale = self._data_control.ball_size / px_delta
+        return scale
 
     def prep_progress(self):
         pbar = self.parent().window().progressBar

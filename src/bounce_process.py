@@ -87,6 +87,7 @@ class BounceAnalyzer(QMainWindow, Ui_Bounce):
         self.playBtn.clicked.connect(self.videoController.play)
         self.pauseBtn.clicked.connect(self.videoController.pause)
         self.seekBar.sliderMoved.connect(self.videoController.update_position)
+        self.pxScaleSpin.valueChanged.connect(self.data_control.update_scale)
         self.startEvalBtn.clicked.connect(self.evaluator.video_eval)
         self.actionOpen.triggered.connect(self.videoController.open_file)
         self.actionBatch_Process.triggered.connect(self.start_batch_process)
