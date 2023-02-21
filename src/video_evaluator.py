@@ -118,6 +118,8 @@ class VideoEvaluator(QObject):
         time_data = pd.DataFrame()
         eval_data = pd.DataFrame()
 
+        time_data["Contour_x"] = contour_clean[0]
+        time_data["Contour_y"] = contour_clean[1]
         time_data["Time"] = distance[0]
         time_data["Distance"] = distance[1]
         time_data["Velocity"] = velocity
