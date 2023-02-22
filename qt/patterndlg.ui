@@ -7,11 +7,11 @@
     <x>0</x>
     <y>0</y>
     <width>353</width>
-    <height>136</height>
+    <height>168</height>
    </rect>
   </property>
   <property name="windowTitle">
-   <string>PatternDialog</string>
+   <string>Batch Processing</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
@@ -24,21 +24,25 @@
    <item>
     <layout class="QHBoxLayout" name="horizontalLayout">
      <item>
+      <widget class="QLineEdit" name="rootPathTxt">
+       <property name="alignment">
+        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+       </property>
+      </widget>
+     </item>
+     <item>
       <widget class="QPushButton" name="openBtn">
        <property name="text">
         <string>Open...</string>
        </property>
       </widget>
      </item>
-     <item>
-      <widget class="QLineEdit" name="rootPathTxt"/>
-     </item>
     </layout>
    </item>
    <item>
     <widget class="QLabel" name="label_2">
      <property name="text">
-      <string>Pattern</string>
+      <string>File match pattern</string>
      </property>
     </widget>
    </item>
@@ -46,6 +50,16 @@
     <widget class="QLineEdit" name="patternTxt">
      <property name="text">
       <string>*.cihx</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QLabel" name="label_3">
+     <property name="text">
+      <string>Process all files matching the pattern in the root directory and all subfolders recursively.</string>
+     </property>
+     <property name="wordWrap">
+      <bool>true</bool>
      </property>
     </widget>
    </item>

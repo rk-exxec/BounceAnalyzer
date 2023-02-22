@@ -23,7 +23,7 @@ class Ui_PatternDialog(object):
     def setupUi(self, PatternDialog):
         if not PatternDialog.objectName():
             PatternDialog.setObjectName(u"PatternDialog")
-        PatternDialog.resize(353, 136)
+        PatternDialog.resize(353, 168)
         self.verticalLayout = QVBoxLayout(PatternDialog)
         self.verticalLayout.setObjectName(u"verticalLayout")
         self.label = QLabel(PatternDialog)
@@ -33,15 +33,16 @@ class Ui_PatternDialog(object):
 
         self.horizontalLayout = QHBoxLayout()
         self.horizontalLayout.setObjectName(u"horizontalLayout")
+        self.rootPathTxt = QLineEdit(PatternDialog)
+        self.rootPathTxt.setObjectName(u"rootPathTxt")
+        self.rootPathTxt.setAlignment(Qt.AlignRight|Qt.AlignTrailing|Qt.AlignVCenter)
+
+        self.horizontalLayout.addWidget(self.rootPathTxt)
+
         self.openBtn = QPushButton(PatternDialog)
         self.openBtn.setObjectName(u"openBtn")
 
         self.horizontalLayout.addWidget(self.openBtn)
-
-        self.rootPathTxt = QLineEdit(PatternDialog)
-        self.rootPathTxt.setObjectName(u"rootPathTxt")
-
-        self.horizontalLayout.addWidget(self.rootPathTxt)
 
 
         self.verticalLayout.addLayout(self.horizontalLayout)
@@ -56,6 +57,12 @@ class Ui_PatternDialog(object):
 
         self.verticalLayout.addWidget(self.patternTxt)
 
+        self.label_3 = QLabel(PatternDialog)
+        self.label_3.setObjectName(u"label_3")
+        self.label_3.setWordWrap(True)
+
+        self.verticalLayout.addWidget(self.label_3)
+
         self.buttonBox = QDialogButtonBox(PatternDialog)
         self.buttonBox.setObjectName(u"buttonBox")
         self.buttonBox.setStandardButtons(QDialogButtonBox.Cancel|QDialogButtonBox.Ok)
@@ -69,10 +76,11 @@ class Ui_PatternDialog(object):
     # setupUi
 
     def retranslateUi(self, PatternDialog):
-        PatternDialog.setWindowTitle(QCoreApplication.translate("PatternDialog", u"PatternDialog", None))
+        PatternDialog.setWindowTitle(QCoreApplication.translate("PatternDialog", u"Batch Processing", None))
         self.label.setText(QCoreApplication.translate("PatternDialog", u"Root directory", None))
         self.openBtn.setText(QCoreApplication.translate("PatternDialog", u"Open...", None))
-        self.label_2.setText(QCoreApplication.translate("PatternDialog", u"Pattern", None))
+        self.label_2.setText(QCoreApplication.translate("PatternDialog", u"File match pattern", None))
         self.patternTxt.setText(QCoreApplication.translate("PatternDialog", u"*.cihx", None))
+        self.label_3.setText(QCoreApplication.translate("PatternDialog", u"Process all files matching the pattern in the root directory and all subfolders recursively.", None))
     # retranslateUi
 
