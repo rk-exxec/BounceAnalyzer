@@ -28,8 +28,8 @@ import warnings
 warnings.filterwarnings('ignore', module='pyMRAW')
 
 from PySide6 import QtGui
-from PySide6.QtGui import QShortcut, QFont
-from PySide6.QtWidgets import QMainWindow, QApplication, QProgressBar, QMessageBox, QDialog, QFileDialog
+from PySide6.QtGui import QShortcut, QFont, QPixmap
+from PySide6.QtWidgets import QMainWindow, QApplication, QProgressBar, QMessageBox, QDialog, QFileDialog, QSplashScreen
 from PySide6.QtCore import QCoreApplication, Qt, Signal, Slot
 
 from ui_bounce import Ui_Bounce
@@ -38,6 +38,7 @@ from video_controller import VideoController
 from video_evaluator import VideoEvaluator
 from data_control import DataControl
 from qthread_worker import Worker
+
 
 class PatternDialog(QDialog, Ui_PatternDialog):
     def __init__(self, parent=None):
@@ -182,14 +183,22 @@ class BounceAnalyzer(QMainWindow, Ui_Bounce):
         # self.batch_done = False
 
 
-
-
-
 class App(QApplication):
     def __init__(self, argv, *args, **kwargs):
-        super(App,self).__init__(*args, **kwargs)            
+        super(App,self).__init__(*args, **kwargs)           
+        pic = QPixmap('qt/maesure.png')
+        self.splash = QSplashScreen(pic)#, Qt.WindowStaysOnTopHint)
+        #splash.setWindowFlags(Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint)
+        self.splash.setMask(pic.mask())
+        self.splash.show()
+        self.window = None
+
+    def load_main(self):
         self.window = BounceAnalyzer()
         self.window.show()
+        
+        self.splash.finish(self.window) 
+
         
 
 
@@ -217,9 +226,11 @@ if __name__ == "__main__":
 
     # init application
     app = App(sys.argv)
+    app.load_main()
     # setup logging
     # global logger
     logger = initialize_logger("./log", app.window.textEdit)
+    
     app.processEvents()
 
     # execute qt main loop

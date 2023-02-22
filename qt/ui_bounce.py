@@ -384,14 +384,14 @@ class Ui_Bounce(object):
 
         self.retranslateUi(Bounce)
 
-        self.tabWidget.setCurrentIndex(1)
+        self.tabWidget.setCurrentIndex(0)
 
 
         QMetaObject.connectSlotsByName(Bounce)
     # setupUi
 
     def retranslateUi(self, Bounce):
-        Bounce.setWindowTitle(QCoreApplication.translate("Bounce", u"VideoAnalyzer", None))
+        Bounce.setWindowTitle(QCoreApplication.translate("Bounce", u"BounceAnalyzer", None))
         self.actionOpen.setText(QCoreApplication.translate("Bounce", u"Open...", None))
         self.actionPreferences.setText(QCoreApplication.translate("Bounce", u"Preferences", None))
         self.actionCalibrate_Scale.setText(QCoreApplication.translate("Bounce", u"Calibrate Scale", None))
