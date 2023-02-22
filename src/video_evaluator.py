@@ -32,6 +32,7 @@ from numpy.polynomial import polynomial as P
 
 class VideoEvaluator(QObject):
     update_progress_signal = Signal(float)
+    video_eval_done_signal = Signal()
     def __init__(self, controller: VideoController, data_control: DataControl, ui, parent=None):
         super().__init__(parent=parent)
         self.ui: Ui_Bounce = ui
@@ -108,12 +109,14 @@ class VideoEvaluator(QObject):
 
         # jerk = np.gradient(accel_f, distance[0])
 
-        touch_point = (np.argwhere(accel_fs<=accel_thresh)[0]).item()
+        max_acc_idx = np.abs(accel_fs).argmax()
+        max_acc = accel_fs[max_acc_idx]
+        touch_point = max_acc_idx - (np.argwhere(np.flip(accel_fs[:max_acc_idx])>=accel_thresh)[0]).item()
         touch_time = touch_point*dt + distance[0][0]
 
         max_deformation = np.abs(distance[1][touch_point] - distance[1].max()).squeeze()
         cof = abs(dist_linefit_up.coef[1] / dist_linefit_down.coef[1])
-        max_acc = np.abs(accel_fs).max()
+        
 
         time_data = pd.DataFrame()
         eval_data = pd.DataFrame()
@@ -181,7 +184,8 @@ class VideoEvaluator(QObject):
         eval_data["Video_Name"] = self._video_controller.reader._filename
 
         self._data_control.update_data_signal.emit(time_data, eval_data, contour_clean, streak)
-        self.update_progress_signal.emit(1)
+        self.video_eval_done_signal.emit()
+        # self.update_progress_signal.emit(1)
 
 
     def find_contour(self, img):
