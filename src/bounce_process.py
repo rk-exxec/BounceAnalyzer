@@ -35,7 +35,7 @@ from PySide6.QtCore import QCoreApplication, Qt, Signal, Slot
 from ui_bounce import Ui_Bounce
 from ui_patterndlg import Ui_PatternDialog
 from video_controller import VideoController
-from video_evaluator import VideoEvaluator
+from bounce_evaluator import BounceEvaluator
 from data_control import DataControl
 from qthread_worker import CallbackWorker, Worker
 
@@ -83,7 +83,7 @@ class BounceAnalyzer(QMainWindow, Ui_Bounce):
         self.abortBatchBtn.hide()
         self.videoController = VideoController(self)
         self.data_control = DataControl(self.videoController, self)
-        self.evaluator = VideoEvaluator(self.videoController, self.data_control, self, parent=self)
+        self.evaluator = BounceEvaluator(self.videoController, self.data_control, self, parent=self)
         self.video_done = False
         self.abort_batch_flag = False
         self.batch_thread = None
@@ -104,7 +104,7 @@ class BounceAnalyzer(QMainWindow, Ui_Bounce):
         self.seekBar.sliderMoved.connect(self.videoController.update_position)
         self.pxScaleSpin.valueChanged.connect(self.data_control.update_scale)
         self.ballSizeSpin.valueChanged.connect(self.data_control.update_ball_size)
-        self.startEvalBtn.clicked.connect(self.evaluator.video_eval)
+        self.startEvalBtn.clicked.connect(self.evaluator.bounce_eval)
         self.actionOpen.triggered.connect(self.videoController.open_file)
         self.actionBatch_Process.triggered.connect(self.start_batch_process)
         self.file_drop_event.connect(self.file_dropped)
@@ -219,7 +219,7 @@ class BounceAnalyzer(QMainWindow, Ui_Bounce):
         self.data_control.save_on_data_event = True
         self.video_done = False
         self.videoController.load_video(filename)
-        self.evaluator.do_video_eval()
+        self.evaluator.do_bounce_eval()
         # self.evaluator._thread.wait()
         # self.evaluator.video_eval(callback=self.set_done)
         while not self.video_done: QApplication.processEvents()

@@ -30,7 +30,7 @@ from scipy.signal import savgol_filter, wiener
 from numpy.polynomial import Polynomial
 from numpy.polynomial import polynomial as P
 
-class VideoEvaluator(QObject):
+class BounceEvaluator(QObject):
     update_progress_signal = Signal(float)
     video_eval_done_signal = Signal()
     def __init__(self, controller: VideoController, data_control: DataControl, ui, parent=None):
@@ -41,16 +41,16 @@ class VideoEvaluator(QObject):
         self._thread = None
         self.update_progress_signal.connect(self.update_progress)
 
-    def video_eval(self, callback=None):
+    def bounce_eval(self, callback=None):
         self.prep_progress()
         if callback: 
-            self._thread = CallbackWorker(self.do_video_eval, slotOnFinished=callback)
+            self._thread = CallbackWorker(self.do_bounce_eval, slotOnFinished=callback)
         else:
-            self._thread = Worker(self.do_video_eval)
+            self._thread = Worker(self.do_bounce_eval)
         self._thread.start()
         # self.do_video_eval()
 
-    def do_video_eval(self):
+    def do_bounce_eval(self):
            
         w,h = self._video_controller.reader.frame_shape
         N = self._video_controller.reader.number_of_frames
@@ -85,29 +85,16 @@ class VideoEvaluator(QObject):
 
         velocity = np.gradient(distance[1], distance[0])
         velocity_fs = np.gradient(distance_f, distance[0])#savgol_filter(velocity, 21, 5, mode="nearest")
-        # velocity = np.diff(distance)
-        # velocity_fs = np.diff(distance_f)
         max_dist = distance[1].argmax()
 
         # linefit on distance before and after hit for velocity detection
-        dist_linefit_down = Polynomial(P.polyfit(distance.T[:max_dist].T[0],distance.T[:max_dist].T[1],deg=1))
-        dist_linefit_up = Polynomial(P.polyfit(distance.T[max_dist:max_dist+80].T[0],distance.T[max_dist:max_dist+80].T[1],deg=1))
+        dist_linefit_down = Polynomial(P.polyfit(distance.T[:max_dist].T[0], distance.T[:max_dist].T[1],deg=1))
+        dist_linefit_up = Polynomial(P.polyfit(distance.T[max_dist:max_dist+80].T[0], distance.T[max_dist:max_dist+80].T[1],deg=1))
+        cof = abs(dist_linefit_up.coef[1] / dist_linefit_down.coef[1])
 
         accel = np.gradient(velocity, distance[0])
         accel_fs = np.gradient(velocity_fs, distance[0])
         # accel_fs = savgol_filter(accel_s, 21, 5, mode="constant")
-        # accel = np.diff(velocity)
-        # accel_fs = np.diff(velocity_fs)
-
-        # #fill diffed arrays to plot them correctly
-        # velocity = np.append(velocity, [velocity[-1]])
-        # velocity_fs = np.append(velocity_fs, [velocity_fs[-1]])
-
-        # accel = np.append(accel, [accel[-1]]*2)
-        # accel_fs = np.append(accel_fs, [accel_fs[-1]]*2)
- 
-
-        # jerk = np.gradient(accel_f, distance[0])
 
         max_acc_idx = np.abs(accel_fs).argmax()
         max_acc = accel_fs[max_acc_idx]
@@ -115,7 +102,7 @@ class VideoEvaluator(QObject):
         touch_time = touch_point*dt + distance[0][0]
 
         max_deformation = np.abs(distance[1][touch_point] - distance[1].max()).squeeze()
-        cof = abs(dist_linefit_up.coef[1] / dist_linefit_down.coef[1])
+        
         
 
         time_data = pd.DataFrame()
@@ -136,29 +123,12 @@ class VideoEvaluator(QObject):
         # time_data["Contact_Pos_Y"] = contact_y
         time_data["Accel_Thresh"] = accel_thresh
         time_data["Accel_Thresh_Trig_Idx"] = touch_point
-        time_data["Accel_Thresh_Trig_Time"] = touch_time
-
-        filename = self._data_control.video_path
-        try:
-            *_, material, height, magnet, spacing, _, _  = filename.parts
-            material = material.split("_")[-1].replace(".","")+"22"
-            height = float(height[1:])*1e-3
-        except:
-            material = ""
-            height = 1
-            magnet = ""
-            spacing = ""
-    
-
-        time_data["Material"] = material
-        time_data["Drop_Height"] = height
-        time_data["Magnet"] = magnet
-        time_data["Lamella_Spacing"] = spacing
+        time_data["Accel_Thresh_Trig_Time"] = touch_time       
 
         time_data["Video_Framerate"] = self._video_controller.reader.frame_rate
         time_data["Video_Res"] = f"{w}x{h}"
         time_data["Video_Num_Frames"] = N
-        time_data["Pixel_Scale"] = pixel_scale
+        time_data["Video_Pixel_Scale"] = pixel_scale
         time_data["Video_Name"] = self._video_controller.reader._filename
 
         eval_data["Accel_Thresh"] = [accel_thresh]
@@ -168,12 +138,9 @@ class VideoEvaluator(QObject):
         eval_data["COR"] = cof
         eval_data["Speed_In"] = dist_linefit_down.coef[1]
         eval_data["Speed_Out"] = dist_linefit_up.coef[1]
-        eval_data["Pixel_Scale"] = pixel_scale
+        
         eval_data["Max_Acceleration"] = max_acc
-        eval_data["Material"] = material
-        eval_data["Drop_Height"] = height
-        eval_data["Magnet"] = magnet
-        eval_data["Lamella_Spacing"] = spacing    
+  
         # eval_data["Contact_Time"] = contact_time
         # eval_data["Contact_Idx"] = contact_idx
         # eval_data["Contact_Pos_X"] = contact_x
@@ -181,7 +148,26 @@ class VideoEvaluator(QObject):
         eval_data["Video_Framerate"] = self._video_controller.reader.frame_rate
         eval_data["Video_Res"] = f"{w}x{h}"
         eval_data["Video_Num_Frames"] = N
+        eval_data["Video_Pixel_Scale"] = pixel_scale
         eval_data["Video_Name"] = self._video_controller.reader._filename
+        
+
+        filename = self._data_control.video_path
+        try:
+            *_, material, height, magnet, spacing, _, _  = filename.parts
+            material = material.split("_")[-1].replace(".","")+"22"
+            height = float(height[1:])*1e-3
+            time_data["Material"] = material
+            time_data["Drop_Height"] = height
+            time_data["Magnet"] = magnet
+            time_data["Lamella_Spacing"] = spacing
+
+            eval_data["Material"] = material
+            eval_data["Drop_Height"] = height
+            eval_data["Magnet"] = magnet
+            eval_data["Lamella_Spacing"] = spacing  
+        except:
+            pass
 
         self._data_control.update_data_signal.emit(time_data, eval_data, contour_clean, streak)
         self.video_eval_done_signal.emit()
