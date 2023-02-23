@@ -50,7 +50,7 @@ class BouncePlot(pg.GraphicsLayoutWidget):
         self.plot_vis = {"pen":self.plot_pen}
         self.line_vis = {"pen":pg.mkPen(color="m", width=1, cosmetic=True)}
         
-        self.distance = pg.PlotItem(title="Distance", labels={"left":("Distance", "m"), "bottom":("Time","s")})
+        self.distance = pg.PlotItem(title="Distance", labels={"left":("d", "m"), "bottom":("t","s")})
         self.addItem(self.distance, row=0, col=0)
         self.distanceGraph = pg.PlotDataItem(x=[], y=[], **self.plot_vis)
         self.distance.addItem(self.distanceGraph)
@@ -61,7 +61,7 @@ class BouncePlot(pg.GraphicsLayoutWidget):
         self.distance.getViewBox().invertY()
         # self.distance.getAxis('left').enableAutoSIPrefix(False)
 
-        self.velocity = pg.PlotItem(title="Velocity", labels={"left":("Velocity", "m/s"), "bottom":("Time","s")})
+        self.velocity = pg.PlotItem(title="Velocity", labels={"left":("v", "m/s"), "bottom":("t","s")})
         self.addItem(self.velocity, row=1, col=0)
         self.velocityGraph = pg.PlotDataItem(x=[], y=[], **self.plot_vis)
         self.velocity.addItem(self.velocityGraph)
@@ -72,7 +72,7 @@ class BouncePlot(pg.GraphicsLayoutWidget):
         self.velocity.getViewBox().invertY()
         self.velocity.getViewBox().setXLink(self.distance.getViewBox())
 
-        self.accel= pg.PlotItem(title="Acceleration", labels={"left":("Acceleration", "m/s^2"), "bottom":("Time","s")})
+        self.accel= pg.PlotItem(title="Acceleration", labels={"left":("a", "m/s^2"), "bottom":("t","s")})
         self.accel.getAxis('left').enableAutoSIPrefix(False)
         self.addItem(self.accel, row=2, col=0)
         self.accelGraph = pg.PlotDataItem(x=[], y=[], **self.plot_vis)
