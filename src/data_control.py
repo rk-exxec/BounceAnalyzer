@@ -49,7 +49,7 @@ class DataControl(QObject):
         self._first_show = True
         self.video_path: Path = None
         self.ball_size = 2.5e-3
-        self.pixel_scale = 1.0
+        self.pixel_scale = None
 
         self.save_on_data_event = False
         self._plot_thread: Worker = None
@@ -73,7 +73,7 @@ class DataControl(QObject):
     @Slot(str, float)
     def update_video_info(self, name, scale):
         self.video_path = Path(name)
-        self.pixel_scale = scale
+        self.pixel_scale = scale if scale != 1.0 else None
 
     @Slot(float)
     def update_ball_size(self, value):
@@ -82,7 +82,7 @@ class DataControl(QObject):
     @Slot(float)
     def update_scale(self, value):
         if value == 0.0:
-            self.pixel_scale = 1.0
+            self.pixel_scale = None
         else:
             self.pixel_scale = value
 
