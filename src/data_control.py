@@ -14,16 +14,9 @@
 #     You should have received a copy of the GNU General Public License
 #     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-from enum import Enum
 import logging
-import os
 
 from pathlib import Path, PurePath
-import tempfile
-from distutils.dir_util import copy_tree
-import glob
-import time
-from datetime import datetime
 from scipy import stats
 import numpy as np
 import pandas as pd
@@ -44,6 +37,7 @@ class DataControl(QObject):
     """ class for data and file control """
     update_plot_signal = Signal(float,float)
     update_data_signal = Signal(pd.DataFrame, pd.DataFrame, np.ndarray, np.ndarray)
+    data_update_done_signal = Signal()
     def __init__(self, video_controller, parent=None) -> None:
         super().__init__(parent=parent)
         self.ui: Ui_Bounce = None # set post init bc of parent relationship not automatically applied on creation in generated script
@@ -58,10 +52,12 @@ class DataControl(QObject):
         self.pixel_scale = None
 
         self.save_on_data_event = False
-
+        self._plot_thread: Worker = None
         self.ui: Ui_Bounce = self.parent()
+
         self.bounce_plot = self.ui.distanceGraph
         self.streak_plot = self.ui.streakImage
+
         self.connect_signals()  
 
 
@@ -111,29 +107,19 @@ class DataControl(QObject):
         if self.save_on_data_event:
             self.save_data()
             self.save_on_data_event = False
+        self.data_update_done_signal.emit()
 
     def update_plots(self):
-    #     if self._plot_thread is None or not self._plot_thread.isRunning():
-    #         self._plot_thread = Worker(self.do_update_plots, parent=self)
-    #         self._plot_thread.start()
-
-    # def do_update_plots(self):#
         self.clear_plots()
         self.plot_image(self.streak_image, self.data)
         self.plot_graphs(self.data)
-        self.set_accents(self.eval_data)
         self.set_info(self.eval_data)
 
     def plot_graphs(self, data: pd.DataFrame):
         self.ui.distanceGraph.plot_graphs(data)
 
     def plot_image(self, streak, data):
-        # self.ui.streakImage.clear()
         self.ui.streakImage.plot_image(streak, data)
-
-    def set_accents(self, data: pd.DataFrame):
-        # self.ui.distanceGraph.plot_graphs(data)
-        pass
 
     def set_info(self, data:pd.DataFrame):
         self.ui.corLbl.setText(f"{data['COR'].item():0.3f}")
