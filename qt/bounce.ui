@@ -18,7 +18,7 @@
     <item>
      <widget class="TabControl" name="tabWidget">
       <property name="currentIndex">
-       <number>0</number>
+       <number>1</number>
       </property>
       <widget class="QWidget" name="videoTab">
        <attribute name="title">
@@ -274,7 +274,7 @@
         <item>
          <layout class="QVBoxLayout" name="verticalLayout_3">
           <item>
-           <widget class="LivePlot" name="streakImage"/>
+           <widget class="StreakPlot" name="streakImage"/>
           </item>
           <item>
            <widget class="QGroupBox" name="groupBox">
@@ -371,13 +371,7 @@
         <item>
          <layout class="QVBoxLayout" name="verticalLayout">
           <item>
-           <widget class="LivePlot" name="distanceGraph"/>
-          </item>
-          <item>
-           <widget class="LivePlot" name="velocityGraph"/>
-          </item>
-          <item>
-           <widget class="LivePlot" name="accelGraph"/>
+           <widget class="BouncePlot" name="distanceGraph"/>
           </item>
           <item>
            <layout class="QHBoxLayout" name="horizontalLayout_6">
@@ -548,15 +542,20 @@
    <header>video_preview</header>
   </customwidget>
   <customwidget>
-   <class>LivePlot</class>
-   <extends>QGraphicsView</extends>
-   <header>live_plot</header>
-  </customwidget>
-  <customwidget>
    <class>TabControl</class>
    <extends>QTabWidget</extends>
    <header>tab_control</header>
    <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>StreakPlot</class>
+   <extends>QGraphicsView</extends>
+   <header>streak_plot</header>
+  </customwidget>
+  <customwidget>
+   <class>BouncePlot</class>
+   <extends>QGraphicsView</extends>
+   <header>bounce_plot</header>
   </customwidget>
  </customwidgets>
  <resources/>

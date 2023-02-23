@@ -22,8 +22,9 @@ from PySide6.QtWidgets import (QAbstractSpinBox, QApplication, QDoubleSpinBox, Q
     QPushButton, QSizePolicy, QSlider, QSpacerItem,
     QStatusBar, QTableWidgetItem, QVBoxLayout, QWidget)
 
-from live_plot import LivePlot
+from bounce_plot import BouncePlot
 from qtexteditlogger import QTextEditLogger
+from streak_plot import StreakPlot
 from tab_control import TabControl
 from table_control import TableControl
 from video_preview import VideoPreview
@@ -221,7 +222,7 @@ class Ui_Bounce(object):
         self.horizontalLayout_5.setObjectName(u"horizontalLayout_5")
         self.verticalLayout_3 = QVBoxLayout()
         self.verticalLayout_3.setObjectName(u"verticalLayout_3")
-        self.streakImage = LivePlot(self.dataTab)
+        self.streakImage = StreakPlot(self.dataTab)
         self.streakImage.setObjectName(u"streakImage")
 
         self.verticalLayout_3.addWidget(self.streakImage)
@@ -286,20 +287,10 @@ class Ui_Bounce(object):
 
         self.verticalLayout = QVBoxLayout()
         self.verticalLayout.setObjectName(u"verticalLayout")
-        self.distanceGraph = LivePlot(self.dataTab)
+        self.distanceGraph = BouncePlot(self.dataTab)
         self.distanceGraph.setObjectName(u"distanceGraph")
 
         self.verticalLayout.addWidget(self.distanceGraph)
-
-        self.velocityGraph = LivePlot(self.dataTab)
-        self.velocityGraph.setObjectName(u"velocityGraph")
-
-        self.verticalLayout.addWidget(self.velocityGraph)
-
-        self.accelGraph = LivePlot(self.dataTab)
-        self.accelGraph.setObjectName(u"accelGraph")
-
-        self.verticalLayout.addWidget(self.accelGraph)
 
         self.horizontalLayout_6 = QHBoxLayout()
         self.horizontalLayout_6.setObjectName(u"horizontalLayout_6")
@@ -384,7 +375,7 @@ class Ui_Bounce(object):
 
         self.retranslateUi(Bounce)
 
-        self.tabWidget.setCurrentIndex(0)
+        self.tabWidget.setCurrentIndex(1)
 
 
         QMetaObject.connectSlotsByName(Bounce)

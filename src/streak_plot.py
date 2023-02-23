@@ -19,6 +19,7 @@ import sys
 
 from PySide6.QtCore import QRectF, Slot
 from PySide6.QtWidgets import QGraphicsRectItem
+import pandas as pd
 
 import pyqtgraph as pg
 
@@ -28,10 +29,10 @@ from typing import List, TYPE_CHECKING
 if TYPE_CHECKING:
     from qt.ui_bounce import Ui_bounce
 
-class LivePlot(pg.PlotWidget):
+class StreakPlot(pg.PlotWidget):
 
     def __init__(self, parent = None):
-        super(LivePlot, self).__init__(parent=parent)
+        super().__init__(parent=parent)
 
         self.ui : Ui_bounce = None # set post init bc of parent relationship not automatically applied on creation in generated script
         self._first_show = True
@@ -39,20 +40,21 @@ class LivePlot(pg.PlotWidget):
         self.color = pg.intColor(self.color_cnt)
 
         pg.setConfigOptions(antialias=True)
-        self.xdata = []
-        self.ydata = []
         self.plotItem.clear()
-        self.img_item = None
-        self.plt: pg.PlotDataItem = self.plotItem.plot(y=self.ydata, x=self.xdata, pen=self.color) #, symbol='x', symbolPen='y', symbolBrush=0.2)
-        self.plt.setPen('y')
-        self.showGrid(x=True, y=True)
         
-        self.plt.setData(y=[], x=[])
+        self.image_item = pg.ImageItem(autoDownsample=False)
+        self.plotItem.addItem(self.image_item)
+        self.plot_item = pg.PlotDataItem()
+        self.plot_item.setPen(pg.mkPen(color="r", width=2, cosmetic=True))
+        self.plotItem.addItem(self.plot_item)
+        # self.showGrid(x=True, y=True)
+        self.plotItem.getViewBox().invertY()
+        
 
         self.tab_visible = False
         self.show()
 
-        logging.info("initialized live plot")
+        logging.info("initialized streak plot")
         
 
     def showEvent(self, event):
@@ -61,33 +63,10 @@ class LivePlot(pg.PlotWidget):
             self.ui = self.window()
             self._first_show = False
 
-    @Slot(bool)
-    def prepare_plot(self, hold=False):
-        """prepares the plot
-        """
-        if hold:
-            self.color_cnt += 1
-        else:
-            self.color_cnt = 0
-            self.plotItem.clear()
-        self.ydata = []
-        self.xdata = []
-        self.color = pg.intColor(self.color_cnt)
-        self.plt = self.plotItem.plot(y=self.ydata, x=self.xdata, pen=self.color)
-
-    def plot(self, data, x, y, label_x, label_y, unit_x, unit_y, color, si_prefix=True, cosmetic=True, width=2):
-        # self.plotItem.clear()
-        self.setLabel('left', label_y, units=unit_y)
-        self.setLabel('bottom', label_x, units=unit_x)
-        self.plotItem.addItem(pg.PlotDataItem(y=data[y], x=data[x], pen=pg.mkPen(color=color, width=width, cosmetic=cosmetic)))
-        self.plotItem.getViewBox().invertY()
-        self.plotItem.getAxis('left').enableAutoSIPrefix(si_prefix)
-
-    def scatter(self, data, x, y, label_x, label_y, unit_x, unit_y, color):
-        # self.plotItem.clear()
-        self.setLabel('left', label_y, units=unit_y)
-        self.setLabel('bottom', label_x, units=unit_x)
-        plt = self.plotItem.addItem(pg.ScatterPlotItem(y=data[y], x=data[x], pen=pg.mkPen((200,50,50,100)), symbol="s", brush=pg.mkBrush(None)))
+    def plot_image(self, streak, data):
+        self.image_item.setImage(streak.T)
+        self.plot_item.setData(data["Contour_x"], data["Contour_y"])
+   
 
     def vline(self, x, color, cosmetic=True, width=2):
         self.plotItem.addItem(pg.InfiniteLine(x, angle = 90, pen=pg.mkPen(color=color, width=width, cosmetic=cosmetic)))
@@ -95,12 +74,8 @@ class LivePlot(pg.PlotWidget):
     def hline(self, x, color, cosmetic=True, width=1):
         self.plotItem.addItem(pg.InfiniteLine(x, angle = 0, pen=pg.mkPen(color=color, width=width, cosmetic=cosmetic)))
 
-    def set_image(self, image):
-        self.image_item = pg.ImageItem(image.T, autoDownsample=False,)
-        self.plotItem.addItem(self.image_item)
-
-    def clear(self):
-        self.plotItem.clear()
+    def clean(self):
         self.image_item.clear()
+        self.plot_item.clear()
 
 

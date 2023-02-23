@@ -60,6 +60,8 @@ class DataControl(QObject):
         self.save_on_data_event = False
 
         self.ui: Ui_Bounce = self.parent()
+        self.bounce_plot = self.ui.distanceGraph
+        self.streak_plot = self.ui.streakImage
         self.connect_signals()  
 
 
@@ -103,42 +105,35 @@ class DataControl(QObject):
         self.streak_image = strk_img
 
         self.ui.tableView.redraw_table_signal.emit(data)
-        self.clear_plots()
+        self.update_plots()
         # TODO add scatter overly for live plot widget, etc, do all datahandling in this datacontrol
-
-        self.plot_image(strk_img, data)
-        self.plot_graphs(data)
-        self.set_accents(eval_data)
-        self.set_info(eval_data)
-
         self.ui.tabWidget.setCurrentIndex(1)
         if self.save_on_data_event:
             self.save_data()
             self.save_on_data_event = False
 
+    def update_plots(self):
+    #     if self._plot_thread is None or not self._plot_thread.isRunning():
+    #         self._plot_thread = Worker(self.do_update_plots, parent=self)
+    #         self._plot_thread.start()
+
+    # def do_update_plots(self):#
+        self.clear_plots()
+        self.plot_image(self.streak_image, self.data)
+        self.plot_graphs(self.data)
+        self.set_accents(self.eval_data)
+        self.set_info(self.eval_data)
+
     def plot_graphs(self, data: pd.DataFrame):
-
-        self.ui.distanceGraph.scatter(data, "Time", "Distance", "Time", "Distance", "s", "m", "r")
-        self.ui.distanceGraph.plot(data, "Time", "Distance_Smooth", "Time", "Distance", "s", "m", "g")
-        # self.ui.distanceGraph.vline(eval_data["Contact_Time"].item(), "y")
-
-        self.ui.velocityGraph.plot(data, "Time", "Velocity_Smooth", "Time", "Velocity", "s", "m/s", "g")
-        self.ui.velocityGraph.scatter(data, "Time", "Velocity", "Time", "Velocity", "s", "m/s", "r")
-        # self.ui.velocityGraph.vline(eval_data["Contact_Time"].item(), "y")
-
-        self.ui.accelGraph.plot(data, "Time", "Acceleration_Smooth", "Time", "Acceleration", "s", "m/s^2", "g", si_prefix=False)
-        self.ui.accelGraph.scatter(data, "Time", "Acceleration", "Time", "Acceleration", "s", "m/s^2", "r")
-        # self.ui.accelGraph.vline(eval_data["Contact_Time"].item(), "y")
+        self.ui.distanceGraph.plot_graphs(data)
 
     def plot_image(self, streak, data):
-        self.ui.streakImage.set_image(streak)
-        self.ui.streakImage.plot(data, "Contour_x", "Contour_y", "", "","","","r")
+        # self.ui.streakImage.clear()
+        self.ui.streakImage.plot_image(streak, data)
 
     def set_accents(self, data: pd.DataFrame):
-        self.ui.distanceGraph.vline(data["Accel_Thresh_Trig_Time"].item(), "m")
-        self.ui.velocityGraph.vline(data["Accel_Thresh_Trig_Time"].item(), "m")
-        self.ui.accelGraph.hline(data["Accel_Thresh"].item(), "m")
-        self.ui.accelGraph.vline(data["Accel_Thresh_Trig_Time"].item(), "m")
+        # self.ui.distanceGraph.plot_graphs(data)
+        pass
 
     def set_info(self, data:pd.DataFrame):
         self.ui.corLbl.setText(f"{data['COR'].item():0.3f}")
@@ -147,10 +142,8 @@ class DataControl(QObject):
         self.ui.pxScaleLbl.setText(f'{data["Pixel_Scale"].item()*1000:.5f} mm/px')
 
     def clear_plots(self):
-        self.ui.streakImage.clear()
-        self.ui.distanceGraph.clear()
-        self.ui.velocityGraph.clear()
-        self.ui.accelGraph.clear()
+        self.ui.streakImage.clean()
+        self.ui.distanceGraph.clean()
 
 
     # @Slot(int)
