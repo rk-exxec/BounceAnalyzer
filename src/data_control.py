@@ -125,7 +125,7 @@ class DataControl(QObject):
         self.ui.corLbl.setText(f"{data['COR'].item():0.3f}")
         self.ui.maxDeformLbl.setText(f'{data["Max_Deformation"].item()*1000:0.3f} mm')
         self.ui.maxAccelLbl.setText(f'{data["Max_Acceleration"].item():0.1f} m/s^2')
-        self.ui.pxScaleLbl.setText(f'{data["Pixel_Scale"].item()*1000:.5f} mm/px')
+        self.ui.pxScaleLbl.setText(f'{data["Video_Pixel_Scale"].item()*1000:.5f} mm/px')
 
     def clear_plots(self):
         self.ui.streakImage.clean()
