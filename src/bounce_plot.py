@@ -16,29 +16,16 @@
 
 import random
 import sys
-
-from PySide6.QtCore import QRectF, Slot
-from PySide6.QtWidgets import QGraphicsRectItem
 import pandas as pd
-
 import pyqtgraph as pg
-
 import logging
-
-from typing import List, TYPE_CHECKING
-if TYPE_CHECKING:
-    from qt.ui_bounce import Ui_bounce
 
 class BouncePlot(pg.GraphicsLayoutWidget):
 
     def __init__(self, parent = None):
         super().__init__(parent=parent)
 
-        self.ui : Ui_bounce = None # set post init bc of parent relationship not automatically applied on creation in generated script
-        self._first_show = True
-
         pg.setConfigOptions(antialias=True)
-
         self.accents = []
 
         # self.showGrid(x=True, y=True)
@@ -92,13 +79,6 @@ class BouncePlot(pg.GraphicsLayoutWidget):
 
         logging.info("initialized live plot")
         
-
-    def showEvent(self, event):
-        super().showEvent(event)
-        if self._first_show:
-            self.ui = self.window()
-            self._first_show = False
-
     def plot_graphs(self, data_plot: pd.DataFrame):
 
         # accel_idx = data["Accel_Thresh_Trig_Idx"][0].item()
