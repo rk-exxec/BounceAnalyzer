@@ -14,30 +14,16 @@
 #     You should have received a copy of the GNU General Public License
 #     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import random
 import sys
-
-from PySide6.QtCore import QRectF, Slot
-from PySide6.QtWidgets import QGraphicsRectItem
 import pandas as pd
-
 import pyqtgraph as pg
-
 import logging
 
-from typing import List, TYPE_CHECKING
-if TYPE_CHECKING:
-    from qt.ui_bounce import Ui_bounce
 
 class StreakPlot(pg.PlotWidget):
 
     def __init__(self, parent = None):
         super().__init__(parent=parent)
-
-        self.ui : Ui_bounce = None # set post init bc of parent relationship not automatically applied on creation in generated script
-        self._first_show = True
-        self.color_cnt = 0
-        self.color = pg.intColor(self.color_cnt)
 
         pg.setConfigOptions(antialias=True)
         self.plotItem.clear()
@@ -56,12 +42,6 @@ class StreakPlot(pg.PlotWidget):
 
         logging.info("initialized streak plot")
         
-
-    def showEvent(self, event):
-        super().showEvent(event)
-        if self._first_show:
-            self.ui = self.window()
-            self._first_show = False
 
     def plot_image(self, streak, data):
         self.image_item.setImage(streak.T)
