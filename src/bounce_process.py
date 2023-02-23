@@ -29,7 +29,7 @@ warnings.filterwarnings('ignore', module='pyMRAW')
 
 from PySide6 import QtGui
 from PySide6.QtGui import QShortcut, QFont, QPixmap
-from PySide6.QtWidgets import QMainWindow, QApplication, QProgressBar, QMessageBox, QDialog, QFileDialog, QSplashScreen
+from PySide6.QtWidgets import QMainWindow, QApplication, QProgressBar, QMessageBox, QDialog, QFileDialog, QSplashScreen, QPushButton
 from PySide6.QtCore import QCoreApplication, Qt, Signal, Slot
 
 from ui_bounce import Ui_Bounce
@@ -37,16 +37,17 @@ from ui_patterndlg import Ui_PatternDialog
 from video_controller import VideoController
 from video_evaluator import VideoEvaluator
 from data_control import DataControl
-from qthread_worker import Worker
+from qthread_worker import CallbackWorker, Worker
 
 
 class PatternDialog(QDialog, Ui_PatternDialog):
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, root_path_prefill=""):
         QDialog.__init__(self, parent=parent)
         self.setupUi(self)
         self.openBtn.clicked.connect(self.open_path)
         self.buttonBox.accepted.connect(lambda: self.quit(True))
         self.buttonBox.rejected.connect(lambda: self.quit(False))
+        self.rootPathTxt.setText(root_path_prefill)
 
     def open_path(self):
         pth = QFileDialog.getExistingDirectory(self,"Select root directory", "D:/Messungen/")
@@ -65,23 +66,31 @@ class PatternDialog(QDialog, Ui_PatternDialog):
 
 class BounceAnalyzer(QMainWindow, Ui_Bounce):
     file_drop_event = Signal(list)
+    update_progress_signal = Signal(float)
     def __init__(self):
         QMainWindow.__init__(self)
         self.setupUi(self)
         self.statusBar().setFont(QFont("Consolas",10))
         self.progressBar = QProgressBar()
+        self.abortBatchBtn = QPushButton()
         self.statusBar().addPermanentWidget(self.progressBar)
+        self.statusBar().addPermanentWidget(self.abortBatchBtn)
         self.progressBar.setGeometry(30, 40, 200, 25)
         self.progressBar.setRange(0,100)
         self.progressBar.setValue(0)
+        self.progressBar.hide()
+        self.abortBatchBtn.setText("Abort")
+        self.abortBatchBtn.hide()
         self.videoController = VideoController(self)
         self.data_control = DataControl(self.videoController, self)
         self.evaluator = VideoEvaluator(self.videoController, self.data_control, self, parent=self)
-        self.batch_done = False
+        self.video_done = False
+        self.abort_batch_flag = False
         self.batch_thread = None
         self.setAcceptDrops(True)
 
         self.videoController.load_video("data/ball_12bit_full.cihx")
+        self.tabWidget.widget(1).show()
         self.tabWidget.setCurrentIndex(0)
         self.register_action_events()
 
@@ -99,6 +108,10 @@ class BounceAnalyzer(QMainWindow, Ui_Bounce):
         self.actionOpen.triggered.connect(self.videoController.open_file)
         self.actionBatch_Process.triggered.connect(self.start_batch_process)
         self.file_drop_event.connect(self.file_dropped)
+        self.abortBatchBtn.clicked.connect(self.batch_abort)
+
+        self.data_control.data_update_done_signal.connect(self.set_done)
+        self.update_progress_signal.connect(self.update_progress)
         
         self.saveDataBtn.clicked.connect(self.data_control.save_dialog)
 
@@ -135,32 +148,60 @@ class BounceAnalyzer(QMainWindow, Ui_Bounce):
 
     @Slot(list)
     def file_dropped(self, files):
-        if len(files)>1: QMessageBox.warning(self, "Warning", "Only first file will be loaded!")
-        file = Path(files[0])
-        if file.exists():
-            logging.info(f"Loading file {str(file)}")
-            if file.suffix == ".csv":
-                self.data_control.load_data(file)
-                self.tabWidget.setCurrentIndex(1)
-            else:
-                self.videoController.load_video(str(file))
-                self.tabWidget.setCurrentIndex(0)
+        if len(files) == 1:
+            file = Path(files[0])
+            if file.is_file():
+                logging.info(f"Loading file {str(file)}")
+                if file.suffix == ".csv":
+                    self.data_control.load_data(file)
+                    self.tabWidget.setCurrentIndex(1)
+                else:
+                    self.videoController.load_video(str(file))
+                    self.tabWidget.setCurrentIndex(0)
+            elif file.is_dir():
+                self.start_batch_process(str(file))
+        elif len(files) > 1:
+            QMessageBox.critical(self, "Invalid Drop", "Only drop single files or folders!")
+        else:
+            QMessageBox.critical(self, "Invalid Path", "Dropped file path is invalid!")
 
-    def start_batch_process(self):
-        dlg = PatternDialog(parent=self)
+    def start_batch_process(self, root=""):
+        dlg = PatternDialog(parent=self, root_path_prefill=root)
         if dlg.exec():
             root, pattern = dlg.values
-            # self.batch_thread = Worker(self.batch_process, root, pattern)
+            glb = list(Path(root).rglob(pattern))
+            # self.batch_process(glb)
+            self.progressBar.setValue(0)
+            self.progressBar.show()
+            self.abortBatchBtn.show()
+            self.batch_process(glb)
+            self.batch_done()
+            # self.batch_thread = CallbackWorker(self.batch_process, glb, slotOnFinished=self.batch_done)
             # self.batch_thread.start()
-            self.batch_process(root, pattern)
 
+    def batch_done(self):
+        QMessageBox.information(self, "Done", "Batch processing done!")
+        self.progressBar.hide()
+        self.abortBatchBtn.hide()
+        self.abort_batch_flag = False
+
+    def batch_abort(self):
+        self.abort_batch_flag = True
+
+    @Slot()
     def set_done(self):
-        self.batch_done = True
+        self.video_done = True
+
+    @Slot(float)
+    def update_progress(self, frac):
+        self.progressBar.setValue(int(round(frac,2)*100))
         
-    def batch_process(self, root, pattern):
-        glb = Path(root).rglob(pattern)
-        for f in glb:
+    def batch_process(self, files):
+        total_count = len(files)
+        cur_count = 0
+        for f in files:
             try:
+                if self.abort_batch_flag: return
                 self.auto_process(f)
             except Exception as e:
                 res = QMessageBox.question(self,"Error encountered!", f"While prosessing the program encountered an error. Continue?\n\nError:\n{traceback.print_exc()}")
@@ -168,19 +209,21 @@ class BounceAnalyzer(QMainWindow, Ui_Bounce):
                     continue
                 else:
                     return
-                
+            finally:
+                cur_count += 1
+                self.update_progress_signal.emit(cur_count/total_count)
             QApplication.processEvents()
-
-        QMessageBox.information(self, "Done", "Batch processing done!")
 
     def auto_process(self, filename):
         logging.info(f"Process file {filename}")
         self.data_control.save_on_data_event = True
+        self.video_done = False
         self.videoController.load_video(filename)
         self.evaluator.do_video_eval()
+        # self.evaluator._thread.wait()
         # self.evaluator.video_eval(callback=self.set_done)
-        # while not self.batch_done: pass
-        # self.batch_done = False
+        while not self.video_done: QApplication.processEvents()
+        
 
 
 class App(QApplication):
