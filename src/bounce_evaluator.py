@@ -175,8 +175,10 @@ class BounceEvaluator(QObject):
 
 
     def find_contour(self, img):
-        
-        cvimg = 4096 - img
+        ret = np.zeros(img.shape, dtype=np.uint8)
+        # img = self.cv2_clahe.apply(img)
+        cv2.normalize(img, ret, norm_type=cv2.NORM_MINMAX, alpha=0, beta=255, dtype=cv2.CV_8UC1)
+        cvimg = 256 - ret
         cvimg = cv2.medianBlur(cvimg, 5)#
 
         _, cvimg = cv2.threshold(cvimg, 180, 255, type=cv2.THRESH_BINARY_INV)
