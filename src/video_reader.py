@@ -17,7 +17,8 @@
 
 import os,sys
 import pyMRAW
-import skvideo.io
+import imageio.v3 as iio
+import av
 
 class VideoReaderMem:
     def __init__(self, filename: str):
@@ -32,14 +33,14 @@ class VideoReaderMem:
             self.frame_rate = float(info["Record Rate(fps)"])
             self.pixel_scale = float(info["Pixel Scale"])
         else:
-            self._vr = skvideo.io.vread(filename, as_grey=True)
+            self._vr = iio.imread(filename, plugin="pyav", format="gray")
         
             self.frame_channels = self._vr[0].shape[-1]
             self.number_of_frames = self._vr[0].shape[0]
             self.bit_per_channel = 8
             self.pixel_scale = 1.0
-            meta = skvideo.io.ffprobe(filename)
-            self.frame_rate = float(eval(meta["video"]['@avg_frame_rate']))
+            meta = iio.immeta(filename)
+            self.frame_rate = meta['fps']
 
         self._filename = filename
         
