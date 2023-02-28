@@ -17,6 +17,7 @@
 import logging
 
 from pathlib import Path, PurePath
+from dataclasses import asdict
 from scipy import stats
 import numpy as np
 import pandas as pd
@@ -26,26 +27,29 @@ from PySide6.QtCore import Signal, Slot, QObject
 from qthread_worker import Worker
 
 from PIL import Image
+import json
 
 from typing import TYPE_CHECKING
 
 from video_controller import VideoController
+from bounce_data import BounceData
 if TYPE_CHECKING:
     from qt.ui_bounce import Ui_Bounce
+
 
 class DataControl(QObject):
     """ class for data and file control """
     update_plot_signal = Signal(float,float)
-    update_data_signal = Signal(pd.DataFrame, pd.DataFrame, np.ndarray, np.ndarray)
+    # update_data_signal = Signal(pd.DataFrame, pd.DataFrame, np.ndarray, np.ndarray)
+    update_data_signal = Signal(BounceData, np.ndarray)
     data_update_done_signal = Signal()
     def __init__(self, video_controller, parent=None) -> None:
         super().__init__(parent=parent)
         self.ui: Ui_Bounce = None # set post init bc of parent relationship not automatically applied on creation in generated script
 
         self.video_controller: VideoController = video_controller
-        self.data : pd.DataFrame = None
-        self.eval_data : pd.DataFrame = None
-        self.streak_image = None
+        self.bounce_data : BounceData = None
+        self.streak_image: np.ndarray = None
         self._first_show = True
         self.video_path: Path = None
         self.ball_size = 2.5e-3
@@ -86,8 +90,9 @@ class DataControl(QObject):
         else:
             self.pixel_scale = value
 
-    @Slot(pd.DataFrame, pd.DataFrame, np.ndarray, np.ndarray)
-    def update_data(self, data:pd.DataFrame, eval_data:pd.DataFrame, contour:np.ndarray, strk_img:np.ndarray):
+    # @Slot(pd.DataFrame, pd.DataFrame, np.ndarray, np.ndarray)
+    @Slot(BounceData, np.ndarray)
+    def update_data(self, bounce_data: BounceData, streak: np.ndarray):
         """ 
         add new datapoint to dataframe and invoke redrawing of table
         
@@ -96,11 +101,11 @@ class DataControl(QObject):
         :param cycle: current cycle in case of repeated measurements
         """
         
-        self.data = data
-        self.eval_data = eval_data
-        self.streak_image = strk_img
+        self.bounce_data = bounce_data
+        # self.eval_data = eval_data
+        self.streak_image = streak
 
-        self.ui.tableView.redraw_table_signal.emit(data)
+        self.ui.tableView.redraw_table_signal.emit(pd.DataFrame.from_dict(asdict(bounce_data)))
         self.update_plots()
         # TODO add scatter overly for live plot widget, etc, do all datahandling in this datacontrol
         self.ui.tabWidget.setCurrentIndex(1)
@@ -111,21 +116,21 @@ class DataControl(QObject):
 
     def update_plots(self):
         self.clear_plots()
-        self.plot_image(self.streak_image, self.data)
-        self.plot_graphs(self.data)
-        self.set_info(self.eval_data)
+        self.plot_image(self.streak_image, self.bounce_data)
+        self.plot_graphs(self.bounce_data)
+        self.set_info(self.bounce_data)
 
-    def plot_graphs(self, data: pd.DataFrame):
+    def plot_graphs(self, data):
         self.ui.distanceGraph.plot_graphs(data)
 
     def plot_image(self, streak, data):
         self.ui.streakImage.plot_image(streak, data)
 
-    def set_info(self, data:pd.DataFrame):
-        self.ui.corLbl.setText(f"{data['COR'].item():0.3f}")
-        self.ui.maxDeformLbl.setText(f'{data["Max_Deformation"].item()*1000:0.3f} mm')
-        self.ui.maxAccelLbl.setText(f'{data["Max_Acceleration"].item():0.1f} m/s^2')
-        self.ui.pxScaleLbl.setText(f'{data["Video_Pixel_Scale"].item()*1000:.5f} mm/px')
+    def set_info(self, data:BounceData):
+        self.ui.corLbl.setText(f"{data.COR:0.3f}")
+        self.ui.maxDeformLbl.setText(f'{data.max_deformation*1000:0.3f} mm')
+        self.ui.maxAccelLbl.setText(f'{data.max_acceleration:0.1f} m/s^2')
+        self.ui.pxScaleLbl.setText(f'{data.video_pixel_scale*1000:.5f} mm/px')
 
     def clear_plots(self):
         self.ui.streakImage.clean()
@@ -146,10 +151,30 @@ class DataControl(QObject):
 
     def save_data(self, filename=None):
         if not filename:
-            filename = self.video_path.with_suffix(".csv")
-        filename = Path(filename)
-        if not self.data.empty: self.data.to_csv(filename, sep='\t', header=True, index=False)
-        if not self.eval_data.empty: self.eval_data.to_csv(filename.parent/(filename.stem + "_eval.csv"), sep='\t', header=True, index=False)
+            filename = self.video_path.with_suffix(".json")
+        filename = Path(filename).with_suffix(".json")
+
+        if self.bounce_data is not None:
+            filename.write_text(self.bounce_data.to_json(),"utf8")
+
+            eval_data = pd.DataFrame()
+            eval_data["acceleration_thresh"] = [self.bounce_data.acceleration_thresh]
+            eval_data["impact_idx"] = self.bounce_data.impact_idx
+            eval_data["impact_time"] = self.bounce_data.impact_time    
+            eval_data["release_idx"] = self.bounce_data.release_idx
+            eval_data["release_time"] = self.bounce_data.release_time   
+            eval_data["max_deformation"] = self.bounce_data.max_deformation
+            eval_data["COR"] = self.bounce_data.COR
+            eval_data["speed_in"] = self.bounce_data.speed_in
+            eval_data["speed_out"] = self.bounce_data.speed_out
+            eval_data["max_acceleration"] = self.bounce_data.max_acceleration
+            eval_data["video_framerate"] = self.bounce_data.video_framerate
+            eval_data["video_resolution"] = self.bounce_data.video_resolution#f"{w}x{h}"
+            eval_data["video_num_frames"] = self.bounce_data.video_num_frames
+            eval_data["video_pixel_scale"] = self.bounce_data.video_pixel_scale
+            eval_data["video_name"] = self.bounce_data.video_name
+
+            eval_data.to_csv(filename.parent/(filename.stem + "_eval.csv"), sep='\t', header=True, index=False)
         if self.streak_image is not None: Image.fromarray(self.streak_image).save(filename.with_stem(filename.stem + "_streak").with_suffix(".png"))
 
     def save_dialog(self):
@@ -163,21 +188,16 @@ class DataControl(QObject):
         """
         file = Path(file)
         self.clear_plots()
-        eval_file = None
+
         # check if the wrong file was dropped by accident, and correct file names
-        if file.stem.endswith("_eval"):
+        if file.suffix == ".csv":
             eval_file = file
             file = Path(file.with_stem(file.stem[:-5]))
-        if file.exists():
-            data = pd.read_csv(file, sep="\t")
-            self.plot_graphs(data)
 
-        if not eval_file:   
-            eval_file = file.with_stem(file.stem + "_eval")
-        if eval_file.exists():
-            eval_data = pd.read_csv(eval_file, sep="\t")
-            self.set_accents(eval_data)
-            self.set_info(eval_data)
+        if file.exists() and file.suffix == ".json":
+            data = BounceData.from_json(file.read_text())
+            self.plot_graphs(data)
+            self.set_info(data)
 
         streak_path = file.with_stem(file.stem + "_streak").with_suffix(".png")
         if streak_path.exists():
@@ -187,7 +207,7 @@ class DataControl(QObject):
 
 
     def delete_data(self):
-        self.data = pd.DataFrame()
+        self.bounce_data = pd.DataFrame()
         self.eval_data = pd.DataFrame()
         self.clear_plots()
         self.ui.tableView.clear()

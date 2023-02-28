@@ -20,6 +20,7 @@ import pandas as pd
 import pyqtgraph as pg
 import logging
 
+from bounce_data import BounceData
 class BouncePlot(pg.GraphicsLayoutWidget):
 
     def __init__(self, parent = None):
@@ -79,37 +80,27 @@ class BouncePlot(pg.GraphicsLayoutWidget):
 
         logging.info("initialized live plot")
         
-    def plot_graphs(self, data_plot: pd.DataFrame):
+    def plot_graphs(self, data_plot: BounceData):
+        self.distanceGraph.setData(data_plot.time, data_plot.distance_smooth, **self.plot_vis)
+        self.distanceScatter.setData(data_plot.time, data_plot.distance, **self.scatter_vis)
+        self.velocityGraph.setData(data_plot.time, data_plot.velocity_smooth, **self.plot_vis)
+        self.velocityScatter.setData(data_plot.time, data_plot.velocity, **self.scatter_vis)
+        self.accelGraph.setData(data_plot.time, data_plot.acceleration_smooth, **self.plot_vis)
+        self.accelScatter.setData(data_plot.time, data_plot.acceleration, **self.scatter_vis)
 
-        # accel_idx = data["Accel_Thresh_Trig_Idx"][0].item()
-        # data_plot = data.iloc[accel_idx//2:int(accel_idx*1.5)].copy()
-        # data_plot = data_plot.reset_index()
-        self.distanceGraph.setData(data_plot["Time"], data_plot["Distance_Smooth"], **self.plot_vis)
-        self.distanceScatter.setData(data_plot["Time"], data_plot["Distance"], **self.scatter_vis)
-        self.velocityGraph.setData(data_plot["Time"], data_plot["Velocity_Smooth"], **self.plot_vis)
-        self.velocityScatter.setData(data_plot["Time"], data_plot["Velocity"], **self.scatter_vis)
-        self.accelGraph.setData(data_plot["Time"], data_plot["Acceleration_Smooth"], **self.plot_vis)
-        self.accelScatter.setData(data_plot["Time"], data_plot["Acceleration"], **self.scatter_vis)
-
-        # self.ui.accelGraph.vline(eval_data["Contact_Time"].item(), "y")s
-
-    # def set_accents(self, data_plot: pd.DataFrame):
-        self.accelVLine.setPos(data_plot["Accel_Thresh_Trig_Time"][0].item())
-        self.velocityVLine.setPos(data_plot["Accel_Thresh_Trig_Time"][0].item())
-        self.distanceVLine.setPos(data_plot["Accel_Thresh_Trig_Time"][0].item())
-        self.accelHLine.setPos(data_plot["Accel_Thresh"][0].item())
-        idx = data_plot["Accel_Thresh_Trig_Time"][0].item()
-        self.distance.setXRange(idx/2,idx*1.5)
+        self.accelVLine.setPos(data_plot.impact_time)
+        self.velocityVLine.setPos(data_plot.impact_time)
+        self.distanceVLine.setPos(data_plot.impact_time)
+        self.accelHLine.setPos(data_plot.acceleration_thresh)
+        self.distance.setXRange(data_plot.impact_time/2, data_plot.impact_time*1.5)
 
     def clean(self):
-        pass
+        pass 
         # self.distanceGraph.setData(x=[], y=[])
         # self.distanceScatter.setData(x=[], y=[])
         # self.velocityGraph.setData(x=[], y=[])
         # self.velocityScatter.setData(x=[], y=[])
         # self.accelGraph.setData(x=[], y=[])
         # self.accelScatter.setData(x=[], y=[])
-        # for l in self.accents:
-        #     self.distance.removeItem(l)
 
 

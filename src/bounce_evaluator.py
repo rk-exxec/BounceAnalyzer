@@ -30,6 +30,8 @@ from scipy.signal import savgol_filter, wiener
 from numpy.polynomial import Polynomial
 from numpy.polynomial import polynomial as P
 
+from bounce_data import BounceData
+
 class BounceEvaluator(QObject):
     update_progress_signal = Signal(float)
     video_eval_done_signal = Signal()
@@ -42,15 +44,15 @@ class BounceEvaluator(QObject):
         self.update_progress_signal.connect(self.update_progress)
 
     def bounce_eval(self, callback=None):
-        self.prep_progress()
-        if callback: 
-            self._thread = CallbackWorker(self.do_bounce_eval, slotOnFinished=callback)
-        else:
-            self._thread = Worker(self.do_bounce_eval)
-        self._thread.start()
-        # self.do_video_eval()
+    #     self.prep_progress()
+    #     if callback: 
+    #         self._thread = CallbackWorker(self.do_bounce_eval, slotOnFinished=callback)
+    #     else:
+    #         self._thread = Worker(self.do_bounce_eval)
+    #     self._thread.start()
+    #     # self.do_video_eval()
 
-    def do_bounce_eval(self):
+    # def do_bounce_eval(self):
            
         w,h = self._video_controller.reader.frame_shape
         N = self._video_controller.reader.number_of_frames
@@ -85,12 +87,6 @@ class BounceEvaluator(QObject):
 
         velocity = np.gradient(distance[1], distance[0])
         velocity_fs = np.gradient(distance_f, distance[0])#savgol_filter(velocity, 21, 5, mode="nearest")
-        max_dist = distance[1].argmax()
-
-        # linefit on distance before and after hit for velocity detection
-        dist_linefit_down = Polynomial(P.polyfit(distance.T[:max_dist].T[0], distance.T[:max_dist].T[1],deg=1))
-        dist_linefit_up = Polynomial(P.polyfit(distance.T[max_dist:max_dist+80].T[0], distance.T[max_dist:max_dist+80].T[1],deg=1))
-        cof = abs(dist_linefit_up.coef[1] / dist_linefit_down.coef[1])
 
         accel = np.gradient(velocity, distance[0])
         accel_fs = np.gradient(velocity_fs, distance[0])
@@ -98,90 +94,67 @@ class BounceEvaluator(QObject):
 
         max_acc_idx = np.abs(accel_fs).argmax()
         max_acc = accel_fs[max_acc_idx]
+
+        # image index and time where acceleration crosses threshold (near max accel)
         touch_point = max_acc_idx - (np.argwhere(np.flip(accel_fs[:max_acc_idx])>=accel_thresh)[0]).item()
         touch_time = touch_point*dt + distance[0][0]
+        release_point = max_acc_idx - (np.argwhere(np.flip(accel_fs[max_acc_idx:])>=accel_thresh)[0]).item()
+        release_time = touch_point*dt + distance[0][0]
 
+        max_dist = distance[1].argmax()
         max_deformation = np.abs(distance[1][touch_point] - distance[1].max()).squeeze()
+
+        # linefit on distance before and after hit for velocity detection
+        pre_impact_dist = distance.T[:touch_point].T
+        post_impact_dist = distance.T[release_point:release_point + 80].T
+        dist_linefit_down = Polynomial(P.polyfit(pre_impact_dist[0], pre_impact_dist[1],deg=1))
+        dist_linefit_up = Polynomial(P.polyfit(post_impact_dist[0], post_impact_dist[1],deg=1))
+        cof = abs(dist_linefit_up.coef[1] / dist_linefit_down.coef[1])
+
+
+        data = BounceData(
+            contour_x=contour_clean[0],
+            contour_y=contour_clean[1],
+            time=distance[0],
+            distance=distance[1],
+            velocity=velocity,
+            acceleration=accel,
+            distance_smooth=distance_f,
+            velocity_smooth=velocity_fs,
+            acceleration_smooth=accel_fs,
+            acceleration_thresh=accel_thresh,
+            impact_idx=touch_point,
+            impact_time=touch_time,
+            release_idx=release_point,
+            release_time=release_time,
+            max_deformation=max_deformation,
+            max_acceleration=max_acc,
+            COR=cof,
+            speed_in=dist_linefit_down.coef[1],
+            speed_out=dist_linefit_up.coef[1],
+            video_framerate=self._video_controller.reader.frame_rate,
+            video_resolution= f"{w}x{h}",
+            video_num_frames=N,
+            video_pixel_scale=pixel_scale,
+            video_name=self._video_controller.reader._filename
+        )
+        # time_data = pd.DataFrame()
+        # eval_data = pd.DataFrame()
+
         
-        
-
-        time_data = pd.DataFrame()
-        eval_data = pd.DataFrame()
-
-        time_data["Contour_x"] = contour_clean[0]
-        time_data["Contour_y"] = contour_clean[1]
-        time_data["Time"] = distance[0]
-        time_data["Distance"] = distance[1]
-        time_data["Velocity"] = velocity
-        time_data["Acceleration"] = accel
-        time_data["Distance_Smooth"] = distance_f
-        time_data["Velocity_Smooth"] = velocity_fs
-        time_data["Acceleration_Smooth"] = accel_fs
-        # time_data["Contact_Time"] = contact_time
-        # time_data["Contact_Idx"] = contact_idx
-        # time_data["Contact_Pos_X"] = contact_x
-        # time_data["Contact_Pos_Y"] = contact_y
-        time_data["Accel_Thresh"] = accel_thresh
-        time_data["Accel_Thresh_Trig_Idx"] = touch_point
-        time_data["Accel_Thresh_Trig_Time"] = touch_time       
-
-        time_data["Video_Framerate"] = self._video_controller.reader.frame_rate
-        time_data["Video_Res"] = f"{w}x{h}"
-        time_data["Video_Num_Frames"] = N
-        time_data["Video_Pixel_Scale"] = pixel_scale
-        time_data["Video_Name"] = self._video_controller.reader._filename
-
-        eval_data["Accel_Thresh"] = [accel_thresh]
-        eval_data["Accel_Thresh_Trig_Idx"] = touch_point
-        eval_data["Accel_Thresh_Trig_Time"] = touch_time
-        eval_data["Max_Deformation"] = max_deformation
-        eval_data["COR"] = cof
-        eval_data["Speed_In"] = dist_linefit_down.coef[1]
-        eval_data["Speed_Out"] = dist_linefit_up.coef[1]
-        
-        eval_data["Max_Acceleration"] = max_acc
-  
-        # eval_data["Contact_Time"] = contact_time
-        # eval_data["Contact_Idx"] = contact_idx
-        # eval_data["Contact_Pos_X"] = contact_x
-        # eval_data["Contact_Pos_Y"] = contact_y
-        eval_data["Video_Framerate"] = self._video_controller.reader.frame_rate
-        eval_data["Video_Res"] = f"{w}x{h}"
-        eval_data["Video_Num_Frames"] = N
-        eval_data["Video_Pixel_Scale"] = pixel_scale
-        eval_data["Video_Name"] = self._video_controller.reader._filename
-        
-
-        filename = self._data_control.video_path
-        try:
-            *_, material, height, magnet, spacing, _, _  = filename.parts
-            material = material.split("_")[-1].replace(".","")+"22"
-            height = float(height[1:])*1e-3
-            time_data["Material"] = material
-            time_data["Drop_Height"] = height
-            time_data["Magnet"] = magnet
-            time_data["Lamella_Spacing"] = spacing
-
-            eval_data["Material"] = material
-            eval_data["Drop_Height"] = height
-            eval_data["Magnet"] = magnet
-            eval_data["Lamella_Spacing"] = spacing  
-        except:
-            pass
-
-        self._data_control.update_data_signal.emit(time_data, eval_data, contour_clean, streak)
+        self._data_control.update_data_signal.emit(data, streak)
         self.video_eval_done_signal.emit()
         # self.update_progress_signal.emit(1)
 
 
     def find_contour(self, img):
-        ret = np.zeros(img.shape, dtype=np.uint8)
+        # ret = np.zeros(img.shape, dtype=np.uint8)
         # img = self.cv2_clahe.apply(img)
-        cv2.normalize(img, ret, norm_type=cv2.NORM_MINMAX, alpha=0, beta=255, dtype=cv2.CV_8UC1)
-        cvimg = 256 - ret
+        #cv2.normalize(img, ret, norm_type=cv2.NORM_MINMAX, alpha=0, beta=255, dtype=cv2.CV_8UC1)
+        cvimg = 4096 - img
         cvimg = cv2.medianBlur(cvimg, 5)#
 
-        _, cvimg = cv2.threshold(cvimg, 180, 255, type=cv2.THRESH_BINARY_INV)
+        _, cvimg = cv2.threshold(cvimg, 1, 255, type=cv2.THRESH_BINARY_INV)
         contours, _ = cv2.findContours(cvimg.astype(np.uint8), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
 
         # get the contour that has the least mean y value, which should be the upper most contour

@@ -45,7 +45,7 @@ class StreakPlot(pg.PlotWidget):
 
     def plot_image(self, streak, data):
         self.image_item.setImage(streak.T)
-        self.plot_item.setData(data["Contour_x"], data["Contour_y"])
+        self.plot_item.setData(data.contour_x, data.contour_y)
    
 
     def vline(self, x, color, cosmetic=True, width=2):

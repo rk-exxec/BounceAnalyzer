@@ -90,7 +90,7 @@ class BounceAnalyzer(QMainWindow, Ui_Bounce):
         self.setAcceptDrops(True)
 
         self.videoController.load_video("data/ball_12bit_full.cihx")
-        self.tabWidget.widget(1).show()
+        self.tabWidget.widget(1).layout().activate()
         self.tabWidget.setCurrentIndex(0)
         self.register_action_events()
 
@@ -152,7 +152,7 @@ class BounceAnalyzer(QMainWindow, Ui_Bounce):
             file = Path(files[0])
             if file.is_file():
                 logging.info(f"Loading file {str(file)}")
-                if file.suffix == ".csv":
+                if file.suffix in [".json", ".csv"]:
                     self.data_control.load_data(file)
                     self.tabWidget.setCurrentIndex(1)
                 else:
@@ -219,7 +219,7 @@ class BounceAnalyzer(QMainWindow, Ui_Bounce):
         self.data_control.save_on_data_event = True
         self.video_done = False
         self.videoController.load_video(filename)
-        self.evaluator.do_bounce_eval()
+        self.evaluator.bounce_eval()
         # self.evaluator._thread.wait()
         # self.evaluator.video_eval(callback=self.set_done)
         while not self.video_done: QApplication.processEvents()
