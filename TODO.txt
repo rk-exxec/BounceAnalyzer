@@ -1,6 +1,5 @@
 
-- pixel scaling, determine from video and ball size
-- store pixel scale in data control
+- remove file name eval, move to plotting software
 
 - testing, pytest etc. 
 
