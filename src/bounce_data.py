@@ -15,21 +15,21 @@
 #     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 from dataclasses import dataclass
-from dataclasses_json import dataclass_json
+from dataclass_wizard import JSONSerializable, JSONFileWizard
 import numpy as np
 
-@dataclass_json
+# @dataclass_json
 @dataclass
-class BounceData:
-    contour_x: np.ndarray[(1,), int]
-    contour_y: np.ndarray[(1,), int]
-    time: np.ndarray[(1,), float]
-    distance: np.ndarray[(1,), float]
-    velocity: np.ndarray[(1,), float]
-    acceleration: np.ndarray[(1,), float]
-    distance_smooth: np.ndarray[(1,), float]
-    velocity_smooth: np.ndarray[(1,), float]
-    acceleration_smooth: np.ndarray[(1,), float]
+class BounceData(JSONSerializable, JSONFileWizard):
+    contour_x: list[int]
+    contour_y: list[int]
+    time: list[float]
+    distance: list[float]
+    velocity: list[float]
+    acceleration: list[float]
+    distance_smooth: list[float]
+    velocity_smooth: list[float]
+    acceleration_smooth: list[float]
 
     acceleration_thresh: float
     impact_idx: int
@@ -38,7 +38,7 @@ class BounceData:
     release_time: float
 
     max_deformation: float
-    COR: float
+    cor: float
     speed_in: float
     speed_out: float
     max_acceleration: float
@@ -49,6 +49,17 @@ class BounceData:
     video_pixel_scale: float #mm/px
     video_name: str
 
+
+    def __post_init__(self):
+        self.contour_x = list(self.contour_x)
+        self.contour_y = list(self.contour_y)
+        self.time = list(self.time)
+        self.distance = list(self.distance)   
+        self.velocity = list(self.velocity)
+        self.acceleration = list(self.acceleration)
+        self.distance_smooth = list(self.distance_smooth)
+        self.velocity_smooth = list(self.velocity_smooth)
+        self.acceleration_smooth = list(self.acceleration_smooth)
 
 
 

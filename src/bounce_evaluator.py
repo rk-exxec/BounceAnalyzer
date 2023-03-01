@@ -129,7 +129,7 @@ class BounceEvaluator(QObject):
             release_time=release_time,
             max_deformation=max_deformation,
             max_acceleration=max_acc,
-            COR=cof,
+            cor=cof,
             speed_in=dist_linefit_down.coef[1],
             speed_out=dist_linefit_up.coef[1],
             video_framerate=self._video_controller.reader.frame_rate,

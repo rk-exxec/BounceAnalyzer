@@ -127,7 +127,7 @@ class DataControl(QObject):
         self.ui.streakImage.plot_image(streak, data)
 
     def set_info(self, data:BounceData):
-        self.ui.corLbl.setText(f"{data.COR:0.3f}")
+        self.ui.corLbl.setText(f"{data.cor:0.3f}")
         self.ui.maxDeformLbl.setText(f'{data.max_deformation*1000:0.3f} mm')
         self.ui.maxAccelLbl.setText(f'{data.max_acceleration:0.1f} m/s^2')
         self.ui.pxScaleLbl.setText(f'{data.video_pixel_scale*1000:.5f} mm/px')
@@ -155,7 +155,7 @@ class DataControl(QObject):
         filename = Path(filename).with_suffix(".json")
 
         if self.bounce_data is not None:
-            filename.write_text(self.bounce_data.to_json(),"utf8")
+            self.bounce_data.to_json_file(filename)
 
             eval_data = pd.DataFrame()
             eval_data["acceleration_thresh"] = [self.bounce_data.acceleration_thresh]
@@ -164,7 +164,7 @@ class DataControl(QObject):
             eval_data["release_idx"] = self.bounce_data.release_idx
             eval_data["release_time"] = self.bounce_data.release_time   
             eval_data["max_deformation"] = self.bounce_data.max_deformation
-            eval_data["COR"] = self.bounce_data.COR
+            eval_data["COR"] = self.bounce_data.cor
             eval_data["speed_in"] = self.bounce_data.speed_in
             eval_data["speed_out"] = self.bounce_data.speed_out
             eval_data["max_acceleration"] = self.bounce_data.max_acceleration
@@ -195,7 +195,7 @@ class DataControl(QObject):
             file = Path(file.with_stem(file.stem[:-5]))
 
         if file.exists() and file.suffix == ".json":
-            data = BounceData.from_json(file.read_text())
+            data = BounceData.from_json_file(file)
             self.plot_graphs(data)
             self.set_info(data)
 
@@ -207,8 +207,7 @@ class DataControl(QObject):
 
 
     def delete_data(self):
-        self.bounce_data = pd.DataFrame()
-        self.eval_data = pd.DataFrame()
+        self.bounce_data = None
         self.clear_plots()
         self.ui.tableView.clear()
 
