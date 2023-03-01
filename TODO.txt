@@ -1,6 +1,4 @@
 
-- remove file name eval, move to plotting software
-
 - testing, pytest etc. 
 
 - vgl to original
