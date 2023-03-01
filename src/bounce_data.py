@@ -41,6 +41,8 @@ class BounceData(JSONSerializable, JSONFileWizard):
     cor: float
     speed_in: float
     speed_out: float
+    speed_in_intercept: float
+    speed_out_intercept: float
     max_acceleration: float
 
     video_framerate: float

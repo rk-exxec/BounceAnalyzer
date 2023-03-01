@@ -19,6 +19,7 @@ import sys
 import pandas as pd
 import pyqtgraph as pg
 import logging
+import math
 
 from bounce_data import BounceData
 class BouncePlot(pg.GraphicsLayoutWidget):
@@ -37,6 +38,7 @@ class BouncePlot(pg.GraphicsLayoutWidget):
         self.plot_pen = pg.mkPen(color="g", width=2, cosmetic=True)
         self.plot_vis = {"pen":self.plot_pen}
         self.line_vis = {"pen":pg.mkPen(color="m", width=1, cosmetic=True)}
+        self.slope_vis = {"pen":pg.mkPen(color="y", width=1, cosmetic=True)}
         
         self.distance = pg.PlotItem(title="Distance", labels={"left":("d", "m"), "bottom":("t","s")})
         self.addItem(self.distance, row=0, col=0)
@@ -46,6 +48,12 @@ class BouncePlot(pg.GraphicsLayoutWidget):
         self.distance.addItem(self.distanceScatter)
         self.distanceVLine = pg.InfiniteLine(None, angle = 90, movable=False, **self.line_vis)
         self.distance.addItem(self.distanceVLine)
+
+        self.distanceSpeedInLine = pg.InfiniteLine(None, angle = 90, movable=False, **self.slope_vis)
+        self.distanceSpeedOutLine = pg.InfiniteLine(None, angle = 90, movable=False, **self.slope_vis)
+        self.distance.addItem(self.distanceSpeedInLine)
+        self.distance.addItem(self.distanceSpeedOutLine)
+
         self.distance.getViewBox().invertY()
         # self.distance.getAxis('left').enableAutoSIPrefix(False)
 
@@ -92,6 +100,13 @@ class BouncePlot(pg.GraphicsLayoutWidget):
         self.velocityVLine.setPos(data_plot.impact_time)
         self.distanceVLine.setPos(data_plot.impact_time)
         self.accelHLine.setPos(data_plot.acceleration_thresh)
+
+        self.distanceSpeedInLine.setAngle(math.degrees(math.atan(data_plot.speed_in)))
+        self.distanceSpeedOutLine.setAngle(math.degrees(math.atan(data_plot.speed_out)))
+        self.distanceSpeedInLine.setPos((0,data_plot.speed_in_intercept))
+        self.distanceSpeedOutLine.setPos((0,data_plot.speed_out_intercept))
+
+
         self.distance.setXRange(data_plot.impact_time/2, data_plot.impact_time*1.5)
 
     def clean(self):
