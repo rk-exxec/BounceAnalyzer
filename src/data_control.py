@@ -54,7 +54,7 @@ class DataControl(QObject):
         self.video_path: Path = None
         self.ball_size = 2.5e-3
         self.pixel_scale = None
-
+        self.bit_depth = 8
         self.save_on_data_event = False
         self._plot_thread: Worker = None
         self.ui: Ui_Bounce = self.parent()
@@ -74,10 +74,11 @@ class DataControl(QObject):
         self.update_data_signal.connect(self.update_data)
         self.video_controller.loaded_video_signal.connect(self.update_video_info)
         
-    @Slot(str, float)
-    def update_video_info(self, name, scale):
+    @Slot(str, float, float)
+    def update_video_info(self, name, scale, bit_depth):
         self.video_path = Path(name)
         self.pixel_scale = scale if scale != 1.0 else None
+        self.bit_depth = bit_depth
 
     @Slot(float)
     def update_ball_size(self, value):

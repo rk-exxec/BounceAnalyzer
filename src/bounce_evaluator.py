@@ -132,6 +132,8 @@ class BounceEvaluator(QObject):
             cor=cof,
             speed_in=dist_linefit_down.coef[1],
             speed_out=dist_linefit_up.coef[1],
+            speed_in_intercept=dist_linefit_down.coef[0],
+            speed_out_intercept=dist_linefit_up.coef[0],
             video_framerate=self._video_controller.reader.frame_rate,
             video_resolution= f"{w}x{h}",
             video_num_frames=N,
@@ -151,10 +153,10 @@ class BounceEvaluator(QObject):
         # ret = np.zeros(img.shape, dtype=np.uint8)
         # img = self.cv2_clahe.apply(img)
         #cv2.normalize(img, ret, norm_type=cv2.NORM_MINMAX, alpha=0, beta=255, dtype=cv2.CV_8UC1)
-        cvimg = 4096 - img
+        cvimg = int(2**self._data_control.bit_depth-1) - img #invert image by subtracting it from fully white maxvalue
         cvimg = cv2.medianBlur(cvimg, 5)#
 
-        _, cvimg = cv2.threshold(cvimg, 1, 255, type=cv2.THRESH_BINARY_INV)
+        _, cvimg = cv2.threshold(cvimg, 10, 255, type=cv2.THRESH_BINARY_INV)
         contours, _ = cv2.findContours(cvimg.astype(np.uint8), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
 
         # get the contour that has the least mean y value, which should be the upper most contour
