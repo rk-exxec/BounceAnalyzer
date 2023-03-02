@@ -231,9 +231,20 @@ class Ui_Bounce(object):
         self.groupBox.setObjectName(u"groupBox")
         self.gridLayout = QGridLayout(self.groupBox)
         self.gridLayout.setObjectName(u"gridLayout")
+        self.label_2 = QLabel(self.groupBox)
+        self.label_2.setObjectName(u"label_2")
+        self.label_2.setAlignment(Qt.AlignRight|Qt.AlignTrailing|Qt.AlignVCenter)
+
+        self.gridLayout.addWidget(self.label_2, 0, 0, 1, 1)
+
+        self.pxScaleLbl = QLabel(self.groupBox)
+        self.pxScaleLbl.setObjectName(u"pxScaleLbl")
+
+        self.gridLayout.addWidget(self.pxScaleLbl, 3, 1, 1, 1)
+
         self.horizontalSpacer_3 = QSpacerItem(40, 5, QSizePolicy.Expanding, QSizePolicy.Minimum)
 
-        self.gridLayout.addItem(self.horizontalSpacer_3, 0, 2, 1, 1)
+        self.gridLayout.addItem(self.horizontalSpacer_3, 0, 4, 1, 1)
 
         self.label_6 = QLabel(self.groupBox)
         self.label_6.setObjectName(u"label_6")
@@ -241,21 +252,16 @@ class Ui_Bounce(object):
 
         self.gridLayout.addWidget(self.label_6, 2, 0, 1, 1)
 
-        self.corLbl = QLabel(self.groupBox)
-        self.corLbl.setObjectName(u"corLbl")
+        self.label_5 = QLabel(self.groupBox)
+        self.label_5.setObjectName(u"label_5")
+        self.label_5.setAlignment(Qt.AlignRight|Qt.AlignTrailing|Qt.AlignVCenter)
 
-        self.gridLayout.addWidget(self.corLbl, 1, 1, 1, 1)
+        self.gridLayout.addWidget(self.label_5, 3, 0, 1, 1)
 
         self.maxDeformLbl = QLabel(self.groupBox)
         self.maxDeformLbl.setObjectName(u"maxDeformLbl")
 
         self.gridLayout.addWidget(self.maxDeformLbl, 0, 1, 1, 1)
-
-        self.label_2 = QLabel(self.groupBox)
-        self.label_2.setObjectName(u"label_2")
-        self.label_2.setAlignment(Qt.AlignRight|Qt.AlignTrailing|Qt.AlignVCenter)
-
-        self.gridLayout.addWidget(self.label_2, 0, 0, 1, 1)
 
         self.maxAccelLbl = QLabel(self.groupBox)
         self.maxAccelLbl.setObjectName(u"maxAccelLbl")
@@ -266,18 +272,34 @@ class Ui_Bounce(object):
         self.label_4.setObjectName(u"label_4")
         self.label_4.setAlignment(Qt.AlignRight|Qt.AlignTrailing|Qt.AlignVCenter)
 
-        self.gridLayout.addWidget(self.label_4, 1, 0, 1, 1)
+        self.gridLayout.addWidget(self.label_4, 0, 2, 1, 1)
 
-        self.label_5 = QLabel(self.groupBox)
-        self.label_5.setObjectName(u"label_5")
-        self.label_5.setAlignment(Qt.AlignRight|Qt.AlignTrailing|Qt.AlignVCenter)
+        self.corLbl = QLabel(self.groupBox)
+        self.corLbl.setObjectName(u"corLbl")
 
-        self.gridLayout.addWidget(self.label_5, 3, 0, 1, 1)
+        self.gridLayout.addWidget(self.corLbl, 0, 3, 1, 1)
 
-        self.pxScaleLbl = QLabel(self.groupBox)
-        self.pxScaleLbl.setObjectName(u"pxScaleLbl")
+        self.label_9 = QLabel(self.groupBox)
+        self.label_9.setObjectName(u"label_9")
+        self.label_9.setAlignment(Qt.AlignRight|Qt.AlignTrailing|Qt.AlignVCenter)
 
-        self.gridLayout.addWidget(self.pxScaleLbl, 3, 1, 1, 1)
+        self.gridLayout.addWidget(self.label_9, 2, 2, 1, 1)
+
+        self.label_10 = QLabel(self.groupBox)
+        self.label_10.setObjectName(u"label_10")
+        self.label_10.setAlignment(Qt.AlignRight|Qt.AlignTrailing|Qt.AlignVCenter)
+
+        self.gridLayout.addWidget(self.label_10, 3, 2, 1, 1)
+
+        self.speedInLbl = QLabel(self.groupBox)
+        self.speedInLbl.setObjectName(u"speedInLbl")
+
+        self.gridLayout.addWidget(self.speedInLbl, 2, 3, 1, 1)
+
+        self.speedOutLbl = QLabel(self.groupBox)
+        self.speedOutLbl.setObjectName(u"speedOutLbl")
+
+        self.gridLayout.addWidget(self.speedOutLbl, 3, 3, 1, 1)
 
 
         self.verticalLayout_3.addWidget(self.groupBox)
@@ -375,7 +397,7 @@ class Ui_Bounce(object):
 
         self.retranslateUi(Bounce)
 
-        self.tabWidget.setCurrentIndex(0)
+        self.tabWidget.setCurrentIndex(1)
 
 
         QMetaObject.connectSlotsByName(Bounce)
@@ -402,14 +424,18 @@ class Ui_Bounce(object):
         self.label.setText(QCoreApplication.translate("Bounce", u"Log:", None))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.videoTab), QCoreApplication.translate("Bounce", u"Video", None))
         self.groupBox.setTitle(QCoreApplication.translate("Bounce", u"Info", None))
-        self.label_6.setText(QCoreApplication.translate("Bounce", u"Max Acceleration", None))
-        self.corLbl.setText(QCoreApplication.translate("Bounce", u"0", None))
-        self.maxDeformLbl.setText(QCoreApplication.translate("Bounce", u"0", None))
         self.label_2.setText(QCoreApplication.translate("Bounce", u"Max Deformation", None))
+        self.pxScaleLbl.setText(QCoreApplication.translate("Bounce", u"0", None))
+        self.label_6.setText(QCoreApplication.translate("Bounce", u"Max Acceleration", None))
+        self.label_5.setText(QCoreApplication.translate("Bounce", u"Pixel Scale", None))
+        self.maxDeformLbl.setText(QCoreApplication.translate("Bounce", u"0", None))
         self.maxAccelLbl.setText(QCoreApplication.translate("Bounce", u"0", None))
         self.label_4.setText(QCoreApplication.translate("Bounce", u"COR (Vo/Vi)", None))
-        self.label_5.setText(QCoreApplication.translate("Bounce", u"Pixel Scale", None))
-        self.pxScaleLbl.setText(QCoreApplication.translate("Bounce", u"0", None))
+        self.corLbl.setText(QCoreApplication.translate("Bounce", u"0", None))
+        self.label_9.setText(QCoreApplication.translate("Bounce", u"Speed In (Vi)", None))
+        self.label_10.setText(QCoreApplication.translate("Bounce", u"Speed Out (Vo)", None))
+        self.speedInLbl.setText(QCoreApplication.translate("Bounce", u"0", None))
+        self.speedOutLbl.setText(QCoreApplication.translate("Bounce", u"0", None))
         self.saveDataBtn_2.setText(QCoreApplication.translate("Bounce", u"Save Data", None))
         self.saveDataAsBtn.setText(QCoreApplication.translate("Bounce", u"Save Data As", None))
         self.deleteDataBtn.setText(QCoreApplication.translate("Bounce", u"Delete Data", None))

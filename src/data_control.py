@@ -129,6 +129,9 @@ class DataControl(QObject):
 
     def set_info(self, data:BounceData):
         self.ui.corLbl.setText(f"{data.cor:0.3f}")
+        self.ui.speedInLbl.setText(f"{data.speed_in:0.3f} m/s")
+        self.ui.speedOutLbl.setText(f"{data.speed_out:0.3f} m/s")
+
         self.ui.maxDeformLbl.setText(f'{data.max_deformation*1000:0.3f} mm')
         self.ui.maxAccelLbl.setText(f'{data.max_acceleration:0.1f} m/s^2')
         self.ui.pxScaleLbl.setText(f'{data.video_pixel_scale*1000:.5f} mm/px')

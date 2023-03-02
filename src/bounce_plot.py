@@ -65,6 +65,10 @@ class BouncePlot(pg.GraphicsLayoutWidget):
         self.velocity.addItem(self.velocityScatter)
         self.velocityVLine = pg.InfiniteLine(None, angle = 90, movable=False, **self.line_vis)
         self.velocity.addItem(self.velocityVLine)
+        self.speedInLine = pg.InfiniteLine(None, angle = 0, movable=False, **self.slope_vis)
+        self.velocity.addItem(self.speedInLine)
+        self.speedOutLine = pg.InfiniteLine(None, angle = 0, movable=False, **self.slope_vis)
+        self.velocity.addItem(self.speedOutLine)
         self.velocity.getViewBox().invertY()
         self.velocity.getViewBox().setXLink(self.distance.getViewBox())
 
@@ -106,16 +110,29 @@ class BouncePlot(pg.GraphicsLayoutWidget):
         self.distanceSpeedInLine.setPos((0,data_plot.speed_in_intercept))
         self.distanceSpeedOutLine.setPos((0,data_plot.speed_out_intercept))
 
+        self.speedInLine.setPos(data_plot.speed_in)
+        self.speedOutLine.setPos(data_plot.speed_out)
 
         self.distance.setXRange(data_plot.impact_time/2, data_plot.impact_time*1.5)
 
     def clean(self):
-        pass 
-        # self.distanceGraph.setData(x=[], y=[])
-        # self.distanceScatter.setData(x=[], y=[])
-        # self.velocityGraph.setData(x=[], y=[])
-        # self.velocityScatter.setData(x=[], y=[])
-        # self.accelGraph.setData(x=[], y=[])
-        # self.accelScatter.setData(x=[], y=[])
+        self.distanceGraph.setData([], [], **self.plot_vis)
+        self.distanceScatter.setData([], [], **self.scatter_vis)
+        self.velocityGraph.setData([], [], **self.plot_vis)
+        self.velocityScatter.setData([], [], **self.scatter_vis)
+        self.accelGraph.setData([], [], **self.plot_vis)
+        self.accelScatter.setData([], [], **self.scatter_vis)
+
+        self.accelVLine.setPos(0)
+        self.velocityVLine.setPos(0)
+        self.distanceVLine.setPos(0)
+        self.accelHLine.setPos(0)
+        self.distanceSpeedInLine.setAngle(0)
+        self.distanceSpeedOutLine.setAngle(0)
+        self.distanceSpeedInLine.setPos(0)
+        self.distanceSpeedOutLine.setPos(0)
+
+        self.speedInLine.setPos(0)
+        self.speedOutLine.setPos(0)
 
 
