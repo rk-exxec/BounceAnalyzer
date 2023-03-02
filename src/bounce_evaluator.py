@@ -81,16 +81,18 @@ class BounceEvaluator(QObject):
 
         distance = np.array([contour_clean[0]*dt, contour_clean[1]*pixel_scale])
         # 
-        distance_f = savgol_filter(distance[1], 21, 4, mode="interp")
+        distance_f = savgol_filter(distance[1], int(self._video_controller.reader.frame_rate * 0.0007), 4, mode="interp")
         # distance_f = wiener(distance[1], 31)
         # distance_f = uniform_filter1d(distance[1],8)
 
         velocity = np.gradient(distance[1], distance[0])
         velocity_fs = np.gradient(distance_f, distance[0])#savgol_filter(velocity, 21, 5, mode="nearest")
 
-        accel = np.gradient(velocity, distance[0])
-        accel_fs = np.gradient(velocity_fs, distance[0])
-        # accel_fs = savgol_filter(accel_s, 21, 5, mode="constant")
+        accel = np.gradient(velocity_fs, distance[0])
+        accel_s = np.gradient(velocity_fs, distance[0])
+        # spar = (len(distance[0]) - np.sqrt(len(distance[0])*2)) * np.std(accel_s)**1.5
+        # accel_fs = UnivariateSpline(distance[0], accel_s, s=spar)(distance[0])
+        accel_fs = savgol_filter(accel_s, int(self._video_controller.reader.frame_rate * 0.0007), 5, mode="constant")
 
         max_acc_idx = np.abs(accel_fs).argmax()
         max_acc = accel_fs[max_acc_idx]
