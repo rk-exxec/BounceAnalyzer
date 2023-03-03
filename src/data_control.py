@@ -32,7 +32,7 @@ import json
 from typing import TYPE_CHECKING
 
 from video_controller import VideoController
-from bounce_data import BounceData
+from data_classes import BounceData, VideoInfoPresets
 from video_reader import IVideoReader
 if TYPE_CHECKING:
     from qt.ui_bounce import Ui_Bounce
@@ -55,6 +55,7 @@ class DataControl(QObject):
         self.video_path: Path = None
         self.ball_size = 2.5e-3
         self.pixel_scale = None
+        self.accel_thresh = 1500.0
         self.bit_depth = 8
         self.save_on_data_event = False
         self._plot_thread: Worker = None
@@ -72,8 +73,13 @@ class DataControl(QObject):
         self.ui.saveDataAsBtn.clicked.connect(self.save_dialog)
         self.ui.saveDataAsBtn_2.clicked.connect(self.save_dialog)
         self.ui.deleteDataBtn.clicked.connect(self.delete_data)
+        self.ui.accelThreshSpin.valueChanged.connect(self.set_accel_thresh)
         self.update_data_signal.connect(self.update_data)
         self.video_controller.loaded_video_signal.connect(self.update_video_info)
+
+
+    def set_accel_thresh(self, value):
+        self.accel_thresh = value
         
     @Slot(str, IVideoReader)
     def update_video_info(self, name, reader: IVideoReader):
@@ -215,6 +221,19 @@ class DataControl(QObject):
         self.bounce_data = None
         self.clear_plots()
         self.ui.tableView.clear()
+
+    def get_info_obj(self):
+        info = VideoInfoPresets(
+            length = len(self.video_controller.reader),
+            shape = self.video_controller.reader.frame_shape,
+            pixel_scale = self.pixel_scale,
+            frame_rate = self.video_controller.reader.frame_rate,
+            accel_thresh = self.accel_thresh,
+            bit_depth=self.bit_depth,
+            filename=str(self.video_path),
+            ball_size=self.ball_size,
+        )
+        return info
 
     # def clean_temp_dir(self):
     #     self._temp_dir_handle.cleanup()
