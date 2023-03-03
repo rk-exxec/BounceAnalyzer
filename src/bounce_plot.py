@@ -21,7 +21,7 @@ import pyqtgraph as pg
 import logging
 import math
 
-from bounce_data import BounceData
+from data_classes import BounceData
 class BouncePlot(pg.GraphicsLayoutWidget):
 
     def __init__(self, parent = None):
@@ -38,7 +38,7 @@ class BouncePlot(pg.GraphicsLayoutWidget):
         self.plot_pen = pg.mkPen(color="g", width=2, cosmetic=True)
         self.plot_vis = {"pen":self.plot_pen}
         self.line_vis = {"pen":pg.mkPen(color="m", width=1, cosmetic=True)}
-        self.slope_vis = {"pen":pg.mkPen(color="y", width=1, cosmetic=True)}
+        self.slope_vis = {"pen":pg.mkPen(color=(125,125,0), width=1, cosmetic=True)}
         
         self.distance = pg.PlotItem(title="Distance", labels={"left":("d", "m"), "bottom":("t","s")})
         self.addItem(self.distance, row=0, col=0)

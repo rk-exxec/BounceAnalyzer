@@ -72,7 +72,6 @@ class VideoPreview(QOpenGLWidget):
 
     def update_shape(self, shape):
         self._image_shape = shape
-        # self.set_new_baseline_constraints()
 
     def get_image(self):
         return self._image
@@ -179,12 +178,6 @@ class VideoPreview(QOpenGLWidget):
         self.blockSignals(False)
         return buffer
 
-    # def grab_image(self, raw=False):
-    #     if raw:
-    #         return self._raw_8b_image
-    #     else:
-    #         return self.doubleBufferPaint(self._double_buffer)
-
     def mapFromImage(self, x=None, y=None, w=None, h=None):
         """ 
         Convert Image pixel coordinates to QLabel coordinates
@@ -194,7 +187,7 @@ class VideoPreview(QOpenGLWidget):
         :returns: x or y or Tuple (x,y) of the transformed coordinates, depending on what parameters where given
         """
         scale_x, scale_y, offset_x, offset_y = self.get_transform()
-        res: List[int] = []
+        res: list[int] = []
         if x is not None:
             tr_x = int(round((x  * scale_x) + offset_x))
             res.append(tr_x)

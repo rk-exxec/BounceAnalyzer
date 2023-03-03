@@ -93,7 +93,7 @@ class VideoController(QObject):
 
     @Slot()
     def open_file(self):
-        path,_ = QFileDialog.getOpenFileName(self.ui.centralwidget, "Select Video File", r"G:\Messungen", "Video Files (*.avi *.mp4 *.mkv *.m4a *.webm *.flv *.wmv)")
+        path,_ = QFileDialog.getOpenFileName(self.ui.centralwidget, "Select Video File", r"G:\Messungen", "Video Files (*.cihx *.avi *.mp4 *.mkv *.m4a *.webm *.flv *.wmv)")
         self.load_video(path)
 
     def load_video(self, path):
