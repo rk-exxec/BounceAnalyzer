@@ -1,4 +1,4 @@
-#     BounceAnalyzer is a porgam to analyze the bounces of objects
+#     BounceAnalyzer is a program to analyze the bounces of objects
 #     Copyright (C) 2023  Raphael Kriegl
 
 #     This program is free software: you can redistribute it and/or modify
