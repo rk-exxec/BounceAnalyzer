@@ -17,7 +17,7 @@
 import os
 from pathlib import Path
 from video_preview import VideoPreview
-from video_reader import VideoReaderMem
+from video_reader import IVideoReader, VideoReaderMem
 
 import numpy as np
 import pandas as pd
@@ -33,14 +33,14 @@ class VideoController(QObject):
     """ 
     controller for the video player
     """
-    loaded_video_signal = Signal(str, float, float)
+    loaded_video_signal = Signal(str, IVideoReader)
     def __init__(self, parent=None):
         super().__init__(parent=parent)
         self.ui = parent
         self.player: VideoPreview = self.ui.videoViewer
         self.player.update_contact_pos_event.connect(self.update_contact_pos)
         # self.reader: VideoReader = None
-        self.reader: VideoReaderMem = None
+        self.reader: IVideoReader = None
         self._play_timer = QTimer()
         self._play_timer.timeout.connect(self.timer_handler)
         self._video_limits = [0,None]
@@ -83,22 +83,12 @@ class VideoController(QObject):
         self.contact_frame = self.current_frame_pos
 
     def get_iterframes(self, stepsize=5):
-        # for frame in self.reader[slice(*self._video_limits,stepsize)]:
-        #     yield cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY)
-        # return self.reader[slice(*self._video_limits,stepsize)]
-        # return [cv2.cvtColor(x, cv2.COLOR_RGB2GRAY) for x in self.reader[slice(*self._video_limits,stepsize)]]
         return self.reader[slice(*self._video_limits,stepsize)]
-        # for frame in self.reader[slice(*self._video_limits,stepsize)]:
-        #     yield frame
 
-    # def get_iterframes_delayed(self, stepsize=5):
-    #     #return [dask.array(frame) for frame in self.reader[slice(*self._video_limits,stepsize)]]
-    #     return [dask.delayed(cv2.cvtColor)(frame, cv2.COLOR_RGB2GRAY)
-    #             for frame in self.reader[slice(*self._video_limits,stepsize)]]
 
 
     def get_num_frames(self, stepsize=5):
-        tot_num = self.reader.number_of_frames
+        tot_num = len(self.reader)
         return len(range(tot_num)[slice(*self._video_limits,stepsize)])
 
     @Slot()
@@ -110,11 +100,11 @@ class VideoController(QObject):
         # self.reader = VideoReader(str(path))
         self.reader = VideoReaderMem(str(path))
         self.video_name = Path(path).stem
-        self.ui.seekBar.setMaximum(self.reader.number_of_frames - 1)
+        self.ui.seekBar.setMaximum(len(self.reader) - 1)
         self.ui.seekBar.setMinimum(0)
         self.player.update_shape(self.reader.frame_shape)
         self.read_image(self.ui.seekBar.sliderPosition())
-        self.loaded_video_signal.emit(str(path), self.reader.pixel_scale, self.reader.bit_per_channel)
+        self.loaded_video_signal.emit(str(path), self.reader)
 
     
     def read_image(self, pos):
@@ -130,7 +120,7 @@ class VideoController(QObject):
         self.ui.seekBar.setValue(self.current_frame_pos)
 
     def advance_image(self):
-        if self.current_frame_pos < self.reader.number_of_frames - 1:
+        if self.current_frame_pos < len(self.reader) - 1:
             self.read_image(self.current_frame_pos + 1)
             self.current_frame_pos += 1
             return True

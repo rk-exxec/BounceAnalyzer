@@ -33,6 +33,7 @@ from typing import TYPE_CHECKING
 
 from video_controller import VideoController
 from bounce_data import BounceData
+from video_reader import IVideoReader
 if TYPE_CHECKING:
     from qt.ui_bounce import Ui_Bounce
 
@@ -74,11 +75,11 @@ class DataControl(QObject):
         self.update_data_signal.connect(self.update_data)
         self.video_controller.loaded_video_signal.connect(self.update_video_info)
         
-    @Slot(str, float, float)
-    def update_video_info(self, name, scale, bit_depth):
+    @Slot(str, IVideoReader)
+    def update_video_info(self, name, reader: IVideoReader):
         self.video_path = Path(name)
-        self.pixel_scale = scale if scale != 1.0 else None
-        self.bit_depth = bit_depth
+        self.pixel_scale = reader.pixel_scale if reader.pixel_scale != 1.0 else None
+        self.bit_depth = reader.color_bit_depth
 
     @Slot(float)
     def update_ball_size(self, value):

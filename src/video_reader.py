@@ -18,29 +18,94 @@
 import os,sys
 import pyMRAW
 import imageio.v3 as iio
-import av
+import av # for pipreqs
+import numpy as np
+from abc import ABC
 
-class VideoReaderMem:
+class IVideoReader(ABC):
+    def __len__(self):
+        """Length is number of frames."""
+        raise NotImplementedError()
+
+    def __getitem__(self, index):
+        """Now we can get frame via self[index] and self[start:stop:step]."""
+        raise NotImplementedError()
+
+    def __repr__(self):
+        raise NotImplementedError()
+
+    def __iter__(self):
+        raise NotImplementedError()
+
+    def __enter__(self):
+        raise NotImplementedError()
+
+    def __exit__(self):
+        """Release video file."""
+        raise NotImplementedError()
+
+    def _reset(self):
+        """Re-initialize object."""
+        raise NotImplementedError()
+    
+    @property
+    def image_array(self) -> np.ndarray:
+        raise NotImplementedError()
+
+    @property
+    def frame_width(self) -> int:
+        raise NotImplementedError()
+
+    @property
+    def frame_height(self) -> int:
+        raise NotImplementedError()
+
+    @property
+    def frame_shape(self) -> tuple[int,int]:
+        raise NotImplementedError()
+    
+    @property
+    def color_channels(self) -> int:
+        raise NotImplementedError()
+    
+    @property
+    def color_bit_depth(self) -> int:
+        raise NotImplementedError()
+    
+    @property
+    def frame_rate(self) -> float:
+        raise NotImplementedError()
+    
+    @property
+    def pixel_scale(self) -> float:
+        raise NotImplementedError()
+    
+    @property
+    def filename(self) -> str:
+        raise NotImplementedError()
+
+
+class VideoReaderMem(IVideoReader):
     def __init__(self, filename: str):
         """Open video in filename."""
         if not os.path.exists(filename):
             raise FileNotFoundError(f'{filename} not found.')
         if  filename.endswith("cihx"):
             self._vr, info = pyMRAW.load_video(filename)
-            self.frame_channels = 1
-            self.number_of_frames = int(info["Total Frame"])
-            self.bit_per_channel = int(info["Color Bit"])
-            self.frame_rate = float(info["Record Rate(fps)"])
-            self.pixel_scale = float(info["Pixel Scale"])
+            self._color_channels = 1
+            self._number_of_frames = int(info["Total Frame"])
+            self._bit_per_channel = int(info["Color Bit"])
+            self._frame_rate = float(info["Record Rate(fps)"])
+            self._pixel_scale = float(info["Pixel Scale"])
         else:
             self._vr = iio.imread(filename, plugin="pyav", format="gray")
         
-            self.frame_channels = self._vr[0].shape[-1]
-            self.number_of_frames = self._vr[0].shape[0]
-            self.bit_per_channel = 8
-            self.pixel_scale = 1.0
+            self._color_channels = self._vr[0].shape[-1]
+            self._number_of_frames = self._vr[0].shape[0]
+            self._bit_per_channel = 8
+            self._pixel_scale = 1.0
             meta = iio.immeta(filename)
-            self.frame_rate = meta['fps']
+            self._frame_rate = meta['fps']
 
         self._filename = filename
         
@@ -53,7 +118,7 @@ class VideoReaderMem:
 
     def __len__(self):
         """Length is number of frames."""
-        return self.number_of_frames
+        return self._number_of_frames
 
     def __getitem__(self, index):
         """Now we can get frame via self[index] and self[start:stop:step]."""
@@ -77,6 +142,10 @@ class VideoReaderMem:
         self.__init__(self._filename)
 
     @property
+    def image_array(self) -> np.ndarray:
+        return self._vr
+
+    @property
     def frame_width(self):
         return self._vr.shape[2]
 
@@ -87,3 +156,23 @@ class VideoReaderMem:
     @property
     def frame_shape(self):
         return self._vr.shape[1:]
+    
+    @property
+    def color_channels(self):
+        return self._color_channels
+    
+    @property
+    def color_bit_depth(self):
+        return self._bit_per_channel
+    
+    @property
+    def frame_rate(self):
+        return self._frame_rate
+    
+    @property
+    def pixel_scale(self):
+        return self._pixel_scale
+    
+    @property
+    def filename(self) -> str:
+        return self._filename
