@@ -18,6 +18,17 @@ from dataclasses import dataclass
 from dataclass_wizard import JSONSerializable, JSONFileWizard
 import numpy as np
 
+@dataclass
+class VideoInfoPresets:
+    length: int
+    shape: tuple[int,int]
+    pixel_scale: float
+    frame_rate: float
+    bit_depth: int
+    accel_thresh: float
+    filename: str
+    ball_size: float
+
 # @dataclass_json
 @dataclass
 class BounceData(JSONSerializable, JSONFileWizard):
