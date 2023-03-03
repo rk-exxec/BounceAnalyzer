@@ -14,7 +14,7 @@
 #     You should have received a copy of the GNU General Public License
 #     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from dataclass_wizard import JSONSerializable, JSONFileWizard
 import numpy as np
 
@@ -60,7 +60,7 @@ class BounceData(JSONSerializable, JSONFileWizard):
     video_resolution: str
     video_num_frames: int
     video_pixel_scale: float #mm/px
-    video_name: str
+    video_name: str = field(compare=False)
 
 
     def __post_init__(self):
