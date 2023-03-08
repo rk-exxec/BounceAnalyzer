@@ -84,9 +84,10 @@ def bounce_eval(video: np.ndarray, info: VideoInfoPresets):
 
     # image index and time where acceleration crosses threshold (near max accel)
     touch_point = max_acc_idx - (np.argwhere(np.flip(accel_fs[:max_acc_idx])>=accel_thresh)[0]).item()
-    touch_time = touch_point*dt + distance[0][0]
-    release_point = max_acc_idx - (np.argwhere(np.flip(accel_fs[max_acc_idx:])>=accel_thresh)[0]).item()
-    release_time = touch_point*dt + distance[0][0]
+    touch_time = touch_point*dt + time[0]
+    # release is, where distance reaches same values as at touch time
+    release_point = max_acc_idx + (np.argwhere(distance[max_acc_idx:]<=distance[touch_point])[0]).item()
+    release_time = release_point*dt + time[0]
 
     max_dist = distance.argmax()
     max_deformation = np.abs(distance[touch_point] - distance.max()).squeeze()
