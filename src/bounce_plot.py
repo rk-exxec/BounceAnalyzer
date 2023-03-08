@@ -48,6 +48,8 @@ class BouncePlot(pg.GraphicsLayoutWidget):
         self.distance.addItem(self.distanceScatter)
         self.distanceVLine = pg.InfiniteLine(None, angle = 90, movable=False, **self.line_vis)
         self.distance.addItem(self.distanceVLine)
+        self.distanceVLineOut = pg.InfiniteLine(None, angle = 90, movable=False, **self.line_vis)
+        self.distance.addItem(self.distanceVLineOut)
 
         self.distanceSpeedInLine = pg.InfiniteLine(None, angle = 90, movable=False, **self.slope_vis)
         self.distanceSpeedOutLine = pg.InfiniteLine(None, angle = 90, movable=False, **self.slope_vis)
@@ -103,6 +105,7 @@ class BouncePlot(pg.GraphicsLayoutWidget):
         self.accelVLine.setPos(data_plot.impact_time)
         self.velocityVLine.setPos(data_plot.impact_time)
         self.distanceVLine.setPos(data_plot.impact_time)
+        self.distanceVLineOut.setPos(data_plot.release_time)
         self.accelHLine.setPos(data_plot.acceleration_thresh)
 
         self.distanceSpeedInLine.setAngle(math.degrees(math.atan(data_plot.speed_in)))
