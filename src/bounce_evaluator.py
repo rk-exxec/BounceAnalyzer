@@ -77,8 +77,9 @@ def bounce_eval(video: np.ndarray, info: VideoInfoPresets):
         # accel_s = np.gradient(velocity_fs, time)
         accel_fs = savgol_filter(accel, filter_window, 5, mode="interp")
 
-    max_acc_idx = np.abs(accel_fs).argmax()
-    max_acc = accel_fs[max_acc_idx]
+
+    max_acc_idx = np.abs(accel).argmax()
+    max_acc = accel[max_acc_idx]
 
     # image index and time where acceleration crosses threshold (near max accel)
     touch_point = max_acc_idx - (np.argwhere(np.flip(accel_fs[:max_acc_idx])>=accel_thresh)[0]).item()
