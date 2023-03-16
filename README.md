@@ -17,4 +17,14 @@ BounceAnalyzer can load Photron High Speed Camera Videos (*.cihx, *.mraw) additi
 
 Data is exported as `.csv`.
 
-BounceAnalyzer can do batch processing on entire folders
+BounceAnalyzer can do batch processing on entire folders, simply drag a folder over the interface to open a pattern matching dialog.
+
+## Installation
+
+Uses Python 3.9.4 or higher and execute  
+`pip install -r requirements.txt`
+to isntall the required packages.
+
+## Usage
+
+Execute `python bounce_process.py`
