@@ -28,12 +28,19 @@ class VideoInfoPresets:
     accel_thresh: float
     filename: str
     ball_size: float
+    rel_threshold: float
 
 # @dataclass_json
 @dataclass
 class BounceData(JSONSerializable, JSONFileWizard):
+    video_framerate: float
+    video_resolution: str
+    video_num_frames: int
+    video_pixel_scale: float #mm/px
+    video_name: str = field(compare=False)
+
     contour_x: list[int]
-    contour_y: list[int]
+    contour_y: list[float]
     time: list[float]
     distance: list[float]
     velocity: list[float]
@@ -43,24 +50,20 @@ class BounceData(JSONSerializable, JSONFileWizard):
     acceleration_smooth: list[float]
 
     acceleration_thresh: float
-    impact_idx: int
-    impact_time: float
-    release_idx: int
-    release_time: float
+    impact_idx: int = 0.0
+    impact_time: float = 0.0
+    release_idx: int = 0.0
+    release_time: float = 0.0
 
-    max_deformation: float
-    cor: float
-    speed_in: float
-    speed_out: float
-    speed_in_intercept: float
-    speed_out_intercept: float
-    max_acceleration: float
+    max_deformation: float = 0.0
+    cor: float = 0.0
+    speed_in: float = 0.0
+    speed_out: float = 0.0
+    speed_in_intercept: float = 0.0
+    speed_out_intercept: float = 0.0
+    max_acceleration: float = 0.0
 
-    video_framerate: float
-    video_resolution: str
-    video_num_frames: int
-    video_pixel_scale: float #mm/px
-    video_name: str = field(compare=False)
+
 
 
     def __post_init__(self):

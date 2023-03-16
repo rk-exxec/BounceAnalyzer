@@ -58,6 +58,8 @@ class DataControl(QObject):
         self.accel_thresh = 1500.0
         self.bit_depth = 8
         self.save_on_data_event = False
+        self.rel_threshold = 0.5
+
         self._plot_thread: Worker = None
         self.ui: Ui_Bounce = self.parent()
 
@@ -74,12 +76,16 @@ class DataControl(QObject):
         self.ui.saveDataAsBtn_2.clicked.connect(self.save_dialog)
         self.ui.deleteDataBtn.clicked.connect(self.delete_data)
         self.ui.accelThreshSpin.valueChanged.connect(self.set_accel_thresh)
+        self.ui.relThreshSpin.valueChanged.connect(self.set_rel_thresh)
         self.update_data_signal.connect(self.update_data)
         self.video_controller.loaded_video_signal.connect(self.update_video_info)
 
 
     def set_accel_thresh(self, value):
         self.accel_thresh = value
+
+    def set_rel_thresh(self, value):
+        self.rel_threshold = value
         
     @Slot(str, IVideoReader)
     def update_video_info(self, name, reader: IVideoReader):
@@ -184,6 +190,7 @@ class DataControl(QObject):
             eval_data["video_num_frames"] = self.bounce_data.video_num_frames
             eval_data["video_pixel_scale"] = self.bounce_data.video_pixel_scale
             eval_data["video_name"] = self.bounce_data.video_name
+            eval_data["img_rel_threshold"] = self.rel_threshold
 
             eval_data.to_csv(filename.parent/(filename.stem + "_eval.csv"), sep='\t', header=True, index=False)
         if self.streak_image is not None: Image.fromarray(self.streak_image).save(filename.with_stem(filename.stem + "_streak").with_suffix(".png"))
@@ -232,6 +239,7 @@ class DataControl(QObject):
             bit_depth=self.bit_depth,
             filename=str(self.video_path),
             ball_size=self.ball_size,
+            rel_threshold=self.rel_threshold
         )
         return info
 
