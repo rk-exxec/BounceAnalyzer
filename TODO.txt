@@ -1,4 +1,6 @@
 
+-peak detect with scipy peak detect
+https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.find_peaks.html
 - testing, pytest etc. 
 
 - vgl to original
