@@ -44,9 +44,9 @@
      borderopacity="1.0"
      inkscape:pageopacity="1"
      inkscape:pageshadow="2"
-     inkscape:zoom="3.959798"
-     inkscape:cx="162.63456"
-     inkscape:cy="88.767155"
+     inkscape:zoom="11.189315"
+     inkscape:cx="66.804805"
+     inkscape:cy="28.464656"
      inkscape:document-units="mm"
      inkscape:current-layer="layer1"
      inkscape:document-rotation="0"
@@ -62,8 +62,8 @@
      fit-margin-left="0"
      fit-margin-right="0"
      fit-margin-bottom="0"
-     inkscape:window-width="1920"
-     inkscape:window-height="1137"
+     inkscape:window-width="2560"
+     inkscape:window-height="1377"
      inkscape:window-x="-8"
      inkscape:window-y="-8"
      inkscape:window-maximized="1"
@@ -90,7 +90,11 @@
        y="29.104168" /><path
        id="path540"
        style="fill:#8c8c8c;fill-opacity:1;stroke-width:1;stroke-miterlimit:3.8"
-       d="m 73.997316,29.157456 -6.04383,0.0282 H 67.79829 c -4.755135,2.953204 -9.504622,5.902854 -11.996329,7.437992 -2.499965,1.540225 -2.728979,1.657642 -2.90751,1.671753 -0.178539,0.01411 -0.306635,-0.07513 -1.478773,-1.617672 -1.16639,-1.534978 -3.367811,-4.510885 -5.572997,-7.492073 h -0.690634 l -0.05499,4.057122 7.362459,10.142765 0.439592,0.0282 v -0.08459 L 74.107142,30.594398 Z" /><g
+       d="m 73.997316,29.157456 -6.04383,0.0282 H 67.79829 c -4.755135,2.953204 -9.504622,5.902854 -11.996329,7.437992 -2.499965,1.540225 -2.728979,1.657642 -2.90751,1.671753 -0.178539,0.01411 -0.306635,-0.07513 -1.478773,-1.617672 -1.16639,-1.534978 -3.367811,-4.510885 -5.572997,-7.492073 h -0.690634 l -0.05499,4.057122 7.362459,10.142765 0.439592,0.0282 v -0.08459 L 74.107142,30.594398 Z" /><path
+       style="fill:none;fill-opacity:1;stroke:#df4e16;stroke-width:0.2;stroke-miterlimit:3.8;stroke-dasharray:none;stroke-opacity:1"
+       d="m 46.135223,29.581138 c 0,0 4.812687,6.437993 5.388563,7.238621 0.575875,0.800627 0.905385,1.401262 1.289667,1.470367 0.384282,0.0691 0.58204,-0.211843 1.162511,-0.551187 0.580471,-0.339344 13.15444,-8.13849 13.15444,-8.13849"
+       id="path460"
+       sodipodi:nodetypes="czzzc" /><g
        id="g922"
        transform="translate(6.0719363,2.9214237)"><rect
          y="40.470245"

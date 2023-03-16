@@ -180,6 +180,32 @@ class Ui_Bounce(object):
 
         self.horizontalLayout_3.addWidget(self.ballSizeSpin)
 
+        self.line_4 = QFrame(self.videoTab)
+        self.line_4.setObjectName(u"line_4")
+        self.line_4.setFrameShape(QFrame.VLine)
+        self.line_4.setFrameShadow(QFrame.Sunken)
+
+        self.horizontalLayout_3.addWidget(self.line_4)
+
+        self.label_11 = QLabel(self.videoTab)
+        self.label_11.setObjectName(u"label_11")
+
+        self.horizontalLayout_3.addWidget(self.label_11)
+
+        self.relThreshSpin = QDoubleSpinBox(self.videoTab)
+        self.relThreshSpin.setObjectName(u"relThreshSpin")
+        self.relThreshSpin.setDecimals(2)
+        self.relThreshSpin.setMaximum(1.000000000000000)
+        self.relThreshSpin.setSingleStep(0.100000000000000)
+        self.relThreshSpin.setValue(0.500000000000000)
+
+        self.horizontalLayout_3.addWidget(self.relThreshSpin)
+
+        self.label_12 = QLabel(self.videoTab)
+        self.label_12.setObjectName(u"label_12")
+
+        self.horizontalLayout_3.addWidget(self.label_12)
+
         self.horizontalSpacer = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
 
         self.horizontalLayout_3.addItem(self.horizontalSpacer)
@@ -397,7 +423,7 @@ class Ui_Bounce(object):
 
         self.retranslateUi(Bounce)
 
-        self.tabWidget.setCurrentIndex(1)
+        self.tabWidget.setCurrentIndex(0)
 
 
         QMetaObject.connectSlotsByName(Bounce)
@@ -418,8 +444,10 @@ class Ui_Bounce(object):
         self.label_3.setText(QCoreApplication.translate("Bounce", u" Pixel Scale:", None))
         self.pxScaleSpin.setSpecialValueText(QCoreApplication.translate("Bounce", u"Auto", None))
         self.pxScaleSpin.setSuffix(QCoreApplication.translate("Bounce", u" mm", None))
-        self.label_7.setText(QCoreApplication.translate("Bounce", u"Ball Size", None))
+        self.label_7.setText(QCoreApplication.translate("Bounce", u"Ball Size:", None))
         self.ballSizeSpin.setSuffix(QCoreApplication.translate("Bounce", u" mm", None))
+        self.label_11.setText(QCoreApplication.translate("Bounce", u"Relative Image Threshold:", None))
+        self.label_12.setText(QCoreApplication.translate("Bounce", u"x Max", None))
         self.startEvalBtn.setText(QCoreApplication.translate("Bounce", u"Start Eval", None))
         self.label.setText(QCoreApplication.translate("Bounce", u"Log:", None))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.videoTab), QCoreApplication.translate("Bounce", u"Video", None))
