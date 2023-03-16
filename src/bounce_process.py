@@ -146,7 +146,7 @@ class BounceAnalyzer(QMainWindow, Ui_Bounce):
             event.ignore()
 
     def bounce_eval(self):
-        info = self.data_control.get_info_obj()
+        info = self.data_control.eval_params
         data, streak = bounce_eval(self.videoController.reader.image_array, info)
         self.data_control.update_data_signal.emit(data, streak)
 

@@ -31,7 +31,7 @@ class BouncePlot(pg.GraphicsLayoutWidget):
         self.accents = []
 
         # self.showGrid(x=True, y=True)
-        self.scatter_pen = pg.mkPen((200,50,50,100))
+        self.scatter_pen = pg.mkPen((200,50,50,255))
         self.scatter_symbol = "s"
         self.scatter_brush=pg.mkBrush(None)
         self.scatter_vis = {"pen":None, "symbolPen":self.scatter_pen, "symbol":self.scatter_symbol, "symbolBrush":self.scatter_brush}

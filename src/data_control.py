@@ -16,24 +16,23 @@
 
 import logging
 
-from pathlib import Path, PurePath
+from pathlib import Path
 from dataclasses import asdict
 from scipy import stats
 import numpy as np
 import pandas as pd
-from PySide6.QtWidgets import QFileDialog, QGroupBox, QMessageBox
+from PySide6.QtWidgets import QFileDialog
 from PySide6.QtCore import Signal, Slot, QObject
 
 from qthread_worker import Worker
 
 from PIL import Image
-import json
-
-from typing import TYPE_CHECKING
 
 from video_controller import VideoController
 from data_classes import BounceData, VideoInfoPresets
 from video_reader import IVideoReader
+
+from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from qt.ui_bounce import Ui_Bounce
 
@@ -52,6 +51,7 @@ class DataControl(QObject):
         self.bounce_data : BounceData = None
         self.streak_image: np.ndarray = None
         self._first_show = True
+
         self.video_path: Path = None
         self.ball_size = 2.5e-3
         self.pixel_scale = None
@@ -242,6 +242,11 @@ class DataControl(QObject):
             rel_threshold=self.rel_threshold
         )
         return info
+    
+    @property
+    def eval_params(self):
+        return self.get_info_obj()
+
 
     # def clean_temp_dir(self):
     #     self._temp_dir_handle.cleanup()
