@@ -59,11 +59,12 @@ class DataControl(QObject):
         self.bit_depth = 8
         self.save_on_data_event = False
         self.rel_threshold = 0.5
+        self.target_path = None
 
         self._plot_thread: Worker = None
         self.ui: Ui_Bounce = self.parent()
 
-        self.bounce_plot = self.ui.distanceGraph
+        self.bounce_plot = self.ui.positionGraph
         self.streak_plot = self.ui.streakImage
 
         self.connect_signals()  
@@ -135,7 +136,7 @@ class DataControl(QObject):
         self.set_info(self.bounce_data)
 
     def plot_graphs(self, data):
-        self.ui.distanceGraph.plot_graphs(data)
+        self.ui.positionGraph.plot_graphs(data)
 
     def plot_image(self, streak, data):
         self.ui.streakImage.plot_image(streak, data)
@@ -151,7 +152,7 @@ class DataControl(QObject):
 
     def clear_plots(self):
         self.ui.streakImage.clean()
-        self.ui.distanceGraph.clean()
+        self.ui.positionGraph.clean()
 
 
     # @Slot(int)
@@ -167,6 +168,7 @@ class DataControl(QObject):
             
 
     def save_data(self, filename=None):
+        """ saves data as json (can be loaded to view curves again) and as csv (for the extracted parameters). Also saves streak image."""
         if not filename:
             filename = self.video_path.with_suffix(".json")
         filename = Path(filename).with_suffix(".json")
@@ -201,8 +203,8 @@ class DataControl(QObject):
             self.save_data(dlg[0])
 
     def load_data(self, file):
-        """ loads previously saved csv files
-        will also check if eval data csv is in same director and then load additionally
+        """ loads previously saved csv and json files
+        will also check if json is in same directory as csv or streak image and then load that additionally
         """
         file = Path(file)
         self.clear_plots()
@@ -251,59 +253,3 @@ class DataControl(QObject):
     # def clean_temp_dir(self):
     #     self._temp_dir_handle.cleanup()
     #     self._temp_dir_handle = tempfile.TemporaryDirectory()
-
-
-def export_data_csv(data: pd.DataFrame, filename, sep='\t'):
-    """ Export data as csv with selected separator
-
-    :param filename: name of file to create and write data to
-    """
-    with open(filename, 'w', newline='') as f:
-        if data is not None:
-            data.to_csv(f, sep=sep, index=False)
-
-def export_data_excel(data: pd.DataFrame, filename: Path):
-    """ Export data as csv with selected separator
-
-    :param filename: name of file to create and write data to
-    """
-    filename = Path(filename).with_suffix(".xlsx")
-    with pd.ExcelWriter(filename) as f:
-    # with open(filename, 'wb') as f:
-        if data is not None:
-            data.to_excel(f, index=False, sheet_name="RawData")
-            calc_mean_and_error(data).to_excel(f, index=False, sheet_name="MeanAndError")
-            calc_anova(data).to_excel(f, index=True, sheet_name="ANOVA_One_Way")
-
-def calc_mean_and_error(data: pd.DataFrame) -> pd.DataFrame:
-    grouped_df = data[['Left_Angle', 'Right_Angle', 'R2', 'Drplt_Vol', 'Magn_Pos', 'Magn_Field']].groupby('Magn_Pos',sort=False)
-    num_points_per_group = grouped_df.size().values
-    mean_df = grouped_df.mean()
-
-    # standard deviation
-    mean_df[['Left_Angle_SDEV','Right_Angle_SDEV']] = grouped_df[['Left_Angle','Right_Angle']].std()
-
-    # standard error, 1 sigma confidence interval
-    mean_df[['Left_Angle_SEM_68','Right_Angle_SEM_68']] = grouped_df[['Left_Angle','Right_Angle']].sem()
-
-    # standard error, 2 sigma confidence interval - t distribution
-    t_fac_95_conf_int = stats.t.ppf(0.95, num_points_per_group) # factor according to https://en.wikipedia.org/wiki/Student%27s_t-distribution
-    mean_df[['Left_Angle_SEM_95','Right_Angle_SEM_95']] = mean_df[['Left_Angle_SEM_68','Right_Angle_SEM_68']].multiply(t_fac_95_conf_int, axis=0)
-
-    # standard error, 3 sigma confidence interval - t distribution
-    t_fac_99_conf_int = stats.t.ppf(0.997, num_points_per_group)
-    mean_df[['Left_Angle_SEM_99','Right_Angle_SEM_99']] = mean_df[['Left_Angle_SEM_68','Right_Angle_SEM_68']].multiply(t_fac_99_conf_int, axis=0)
-
-    mean_df = mean_df.reset_index()
-    return mean_df
-
-def calc_anova(data: pd.DataFrame) -> pd.DataFrame:
-    left_angle_grps = [d['Left_Angle'] for _, d in data[['Left_Angle', 'Magn_Pos']].groupby('Magn_Pos',sort=False)]
-    right_angle_grps = [d['Right_Angle'] for _, d in data[['Right_Angle', 'Magn_Pos']].groupby('Magn_Pos',sort=False)]
-    left_F, left_p = stats.f_oneway(*left_angle_grps)
-    right_F, right_p = stats.f_oneway(*right_angle_grps)
-    return pd.DataFrame(
-        data=[[left_F, right_F], ['',''], [left_p, right_p], [left_p < 0.05, right_p < 0.05], [left_p < 0.01, right_p < 0.01]], 
-        index=['F', '','p', 'Sig 5%', 'Sig 1%'], 
-        columns=['Left_Angle', 'Right_Angle']
-        )

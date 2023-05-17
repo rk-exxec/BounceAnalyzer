@@ -42,10 +42,10 @@ class BounceData(JSONSerializable, JSONFileWizard):
     contour_x: list[int]
     contour_y: list[float]
     time: list[float]
-    distance: list[float]
+    position: list[float]
     velocity: list[float]
     acceleration: list[float]
-    distance_smooth: list[float]
+    position_smooth: list[float]
     velocity_smooth: list[float]
     acceleration_smooth: list[float]
 
@@ -70,10 +70,10 @@ class BounceData(JSONSerializable, JSONFileWizard):
         self.contour_x = list(self.contour_x)
         self.contour_y = list(self.contour_y)
         self.time = list(self.time)
-        self.distance = list(self.distance)   
+        self.position = list(self.position)   
         self.velocity = list(self.velocity)
         self.acceleration = list(self.acceleration)
-        self.distance_smooth = list(self.distance_smooth)
+        self.position_smooth = list(self.position_smooth)
         self.velocity_smooth = list(self.velocity_smooth)
         self.acceleration_smooth = list(self.acceleration_smooth)
 

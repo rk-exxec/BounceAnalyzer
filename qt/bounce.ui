@@ -442,7 +442,7 @@
         <item>
          <layout class="QVBoxLayout" name="verticalLayout">
           <item>
-           <widget class="BouncePlot" name="distanceGraph"/>
+           <widget class="BouncePlot" name="positionGraph"/>
           </item>
           <item>
            <layout class="QHBoxLayout" name="horizontalLayout_6">

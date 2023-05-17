@@ -105,7 +105,7 @@ class BounceAnalyzer(QMainWindow, Ui_Bounce):
         self.ballSizeSpin.valueChanged.connect(self.data_control.update_ball_size)
         self.startEvalBtn.clicked.connect(self.bounce_eval)
         self.actionOpen.triggered.connect(self.videoController.open_file)
-        self.actionBatch_Process.triggered.connect(self.start_batch_process)
+        self.actionBatch_Process.triggered.connect(lambda x: self.start_batch_process())
         self.file_drop_event.connect(self.file_dropped)
         self.abortBatchBtn.clicked.connect(self.batch_abort)
 

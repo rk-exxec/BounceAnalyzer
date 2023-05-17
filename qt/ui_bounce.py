@@ -335,10 +335,10 @@ class Ui_Bounce(object):
 
         self.verticalLayout = QVBoxLayout()
         self.verticalLayout.setObjectName(u"verticalLayout")
-        self.distanceGraph = BouncePlot(self.dataTab)
-        self.distanceGraph.setObjectName(u"distanceGraph")
+        self.positionGraph = BouncePlot(self.dataTab)
+        self.positionGraph.setObjectName(u"positionGraph")
 
-        self.verticalLayout.addWidget(self.distanceGraph)
+        self.verticalLayout.addWidget(self.positionGraph)
 
         self.horizontalLayout_6 = QHBoxLayout()
         self.horizontalLayout_6.setObjectName(u"horizontalLayout_6")

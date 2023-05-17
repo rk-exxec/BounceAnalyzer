@@ -54,24 +54,24 @@ def bounce_eval(video: np.ndarray, info: VideoInfoPresets):
     else: pixel_scale = info.pixel_scale
 
     time = contour_x*dt
-    distance = contour_y * pixel_scale
+    position = contour_y * pixel_scale
 
     if USE_SPLINE_CONTOUR:
         m = len(contour_x)
         spl = splrep(contour_x, contour_y, s=np.sqrt(2*m)*spline_smoothing_mult)
         y_new = splev(contour_x, spl, der=0)
-        distance_f = y_new * pixel_scale
+        position_f = y_new * pixel_scale
 
-        velocity = np.gradient(savgol_filter(distance, filter_window, 5, mode="interp"), time)
-        velocity_fs = np.gradient(distance_f, time)
+        velocity = np.gradient(savgol_filter(position, filter_window, 5, mode="interp"), time)
+        velocity_fs = np.gradient(position_f, time)
 
         accel = savgol_filter(np.gradient(velocity, time), filter_window, 5, mode="interp")
         accel_fs = np.gradient(velocity_fs, time)
     else:
-        distance_f = savgol_filter(distance, filter_window, 5, mode="interp")
+        position_f = savgol_filter(position, filter_window, 5, mode="interp")
 
-        velocity = np.gradient(distance, time)
-        velocity_fs = np.gradient(distance_f, time)
+        velocity = np.gradient(position, time)
+        velocity_fs = np.gradient(position_f, time)
 
         accel = np.gradient(velocity, time)
         # accel_s = np.gradient(velocity_fs, time)
@@ -84,16 +84,16 @@ def bounce_eval(video: np.ndarray, info: VideoInfoPresets):
     # image index and time where acceleration crosses threshold (near max accel)
     touch_point = max_acc_idx - (np.argwhere(np.flip(accel_fs[:max_acc_idx])>=accel_thresh)[0]).item()
     touch_time = touch_point*dt + time[0]
-    # release is, where distance reaches same values as at touch time
-    release_point = max_acc_idx + (np.argwhere(distance[max_acc_idx:]<=distance[touch_point])[0]).item()
+    # release is, where position reaches same values as at touch time
+    release_point = max_acc_idx + (np.argwhere(position[max_acc_idx:]<=position[touch_point])[0]).item()
     release_time = release_point*dt + time[0]
 
-    max_dist = distance.argmax()
-    max_deformation = np.abs(distance[touch_point] - distance.max()).squeeze()
+    max_dist = position.argmax()
+    max_deformation = np.abs(position[touch_point] - position.max()).squeeze()
 
-    # linefit on distance before and after hit for velocity detection
-    dist_linefit_down = Polynomial(P.polyfit(time[:touch_point], distance[:touch_point],deg=1))
-    dist_linefit_up = Polynomial(P.polyfit(time[release_point:release_point + line_fit_window], distance[release_point:release_point + line_fit_window],deg=1))
+    # linefit on position before and after hit for velocity detection
+    dist_linefit_down = Polynomial(P.polyfit(time[:touch_point], position[:touch_point],deg=1))
+    dist_linefit_up = Polynomial(P.polyfit(time[release_point:release_point + line_fit_window], position[release_point:release_point + line_fit_window],deg=1))
     cof = abs(dist_linefit_up.coef[1] / dist_linefit_down.coef[1])
 
 
@@ -101,10 +101,10 @@ def bounce_eval(video: np.ndarray, info: VideoInfoPresets):
         contour_x=contour_x,
         contour_y=y_new if USE_SPLINE_CONTOUR else contour_y,
         time=time,
-        distance=distance,
+        position=position,
         velocity=velocity,
         acceleration=accel,
-        distance_smooth=distance_f,
+        position_smooth=position_f,
         velocity_smooth=velocity_fs,
         acceleration_smooth=accel_fs,
         acceleration_thresh=accel_thresh,
@@ -157,10 +157,12 @@ def _central_diff(y,x):
     return res
 
 
-
-
 def _find_contour(img: np.ndarray, info:VideoInfoPresets):
-    cvimg = int(2**info.bit_depth-1) - img #invert image by subtracting it from fully white maxvalue
+    """
+    this determines the top contour of the streak image by fractional indexing (similar to LabView Threshold 1D)
+    uses used defined relative threshold (to max value) for edge detection
+    """
+    cvimg = int(2**info.bit_depth-1) - img #invert image by subtracting it from fully white max value
     # blur = cvimg #cv2.GaussianBlur(cvimg, (5,5), 1)#
 
     thresh = info.rel_threshold * cvimg.max()
@@ -168,6 +170,7 @@ def _find_contour(img: np.ndarray, info:VideoInfoPresets):
     thresh_x = np.arange(len(thresh_idx))
     contour_x, upper_idx = _clean_contour(np.array([thresh_x, thresh_idx]), info.length)
 
+    # fractional indexing to return smoother position line
     lower_idx = upper_idx - 1
     upper_values = cvimg[upper_idx,contour_x].astype(np.float64)
     lower_values = cvimg[lower_idx,contour_x].astype(np.float64)
@@ -206,17 +209,22 @@ def _clean_contour(contour, num_frames):
     return contour_clean
 
 def _get_scale(streak, y_values, first_x, info: VideoInfoPresets):
-    def get_drop_pxwidth(idx):
+    """ calculate pixel scale from known width of object"""
+    def get_obj_px_height(idx):
+        # calculate height of streak
         line = streak.T[idx]
         max_val = line.max()
-        first_dip = np.argmax(line<max_val)
-        first_rise = np.argmax(line[first_dip+1:] == max_val) + first_dip+1
-        return abs(first_rise - first_dip)
+        top_border = np.argmax(line<max_val)
+        bottom_border = np.argmax(line[top_border+1:] == max_val) + top_border+1
+        return abs(bottom_border - top_border)
 
-    width = np.zeros((5,), dtype=int)
+    height = np.zeros((5,), dtype=int)
 
+    # sample multiple positions and average for more accurate result
+    # exclude regions, where surface and object overlap, or object is cut off
     for i,idx in enumerate(np.linspace(first_x+5, y_values.argmax() - 10, 5, dtype=int)):
-        width[i] = get_drop_pxwidth(idx)
-    px_delta = width.mean()
+        height[i] = get_obj_px_height(idx)
+    px_delta = height.mean()
+
     scale = info.ball_size / px_delta
     return scale

@@ -40,24 +40,24 @@ class BouncePlot(pg.GraphicsLayoutWidget):
         self.line_vis = {"pen":pg.mkPen(color="m", width=1, cosmetic=True)}
         self.slope_vis = {"pen":pg.mkPen(color=(125,125,0), width=1, cosmetic=True)}
         
-        self.distance = pg.PlotItem(title="Distance", labels={"left":("d", "m"), "bottom":("t","s")})
-        self.addItem(self.distance, row=0, col=0)
-        self.distanceGraph = pg.PlotDataItem(x=[], y=[], **self.plot_vis)
-        self.distance.addItem(self.distanceGraph)
-        self.distanceScatter = pg.PlotDataItem(x=[], y=[], **self.scatter_vis)
-        self.distance.addItem(self.distanceScatter)
-        self.distanceVLine = pg.InfiniteLine(None, angle = 90, movable=False, **self.line_vis)
-        self.distance.addItem(self.distanceVLine)
-        self.distanceVLineOut = pg.InfiniteLine(None, angle = 90, movable=False, **self.line_vis)
-        self.distance.addItem(self.distanceVLineOut)
+        self.position = pg.PlotItem(title="Position", labels={"left":("d", "m"), "bottom":("t","s")})
+        self.addItem(self.position, row=0, col=0)
+        self.positionGraph = pg.PlotDataItem(x=[], y=[], **self.plot_vis)
+        self.position.addItem(self.positionGraph)
+        self.positionScatter = pg.PlotDataItem(x=[], y=[], **self.scatter_vis)
+        self.position.addItem(self.positionScatter)
+        self.positionVLine = pg.InfiniteLine(None, angle = 90, movable=False, **self.line_vis)
+        self.position.addItem(self.positionVLine)
+        self.positionVLineOut = pg.InfiniteLine(None, angle = 90, movable=False, **self.line_vis)
+        self.position.addItem(self.positionVLineOut)
 
-        self.distanceSpeedInLine = pg.InfiniteLine(None, angle = 90, movable=False, **self.slope_vis)
-        self.distanceSpeedOutLine = pg.InfiniteLine(None, angle = 90, movable=False, **self.slope_vis)
-        self.distance.addItem(self.distanceSpeedInLine)
-        self.distance.addItem(self.distanceSpeedOutLine)
+        self.positionSpeedInLine = pg.InfiniteLine(None, angle = 90, movable=False, **self.slope_vis)
+        self.positionSpeedOutLine = pg.InfiniteLine(None, angle = 90, movable=False, **self.slope_vis)
+        self.position.addItem(self.positionSpeedInLine)
+        self.position.addItem(self.positionSpeedOutLine)
 
-        self.distance.getViewBox().invertY()
-        # self.distance.getAxis('left').enableAutoSIPrefix(False)
+        self.position.getViewBox().invertY()
+        # self.position.getAxis('left').enableAutoSIPrefix(False)
 
         self.velocity = pg.PlotItem(title="Velocity", labels={"left":("v", "m/s"), "bottom":("t","s")})
         self.addItem(self.velocity, row=1, col=0)
@@ -72,7 +72,7 @@ class BouncePlot(pg.GraphicsLayoutWidget):
         self.speedOutLine = pg.InfiniteLine(None, angle = 0, movable=False, **self.slope_vis)
         self.velocity.addItem(self.speedOutLine)
         self.velocity.getViewBox().invertY()
-        self.velocity.getViewBox().setXLink(self.distance.getViewBox())
+        self.velocity.getViewBox().setXLink(self.position.getViewBox())
 
         self.accel= pg.PlotItem(title="Acceleration", labels={"left":("a", "m/s^2"), "bottom":("t","s")})
         self.accel.getAxis('left').enableAutoSIPrefix(False)
@@ -86,7 +86,7 @@ class BouncePlot(pg.GraphicsLayoutWidget):
         self.accelHLine = pg.InfiniteLine(None, angle = 0, movable=False, **self.line_vis)
         self.accel.addItem(self.accelHLine)
         self.accel.getViewBox().invertY()
-        self.accel.getViewBox().setXLink(self.distance.getViewBox())
+        self.accel.getViewBox().setXLink(self.position.getViewBox())
         # self.plt.setData(y=[], x=[])
 
         self.tab_visible = False
@@ -95,8 +95,8 @@ class BouncePlot(pg.GraphicsLayoutWidget):
         logging.info("initialized live plot")
         
     def plot_graphs(self, data_plot: BounceData):
-        self.distanceGraph.setData(data_plot.time, data_plot.distance_smooth, **self.plot_vis)
-        self.distanceScatter.setData(data_plot.time, data_plot.distance, **self.scatter_vis)
+        self.positionGraph.setData(data_plot.time, data_plot.position_smooth, **self.plot_vis)
+        self.positionScatter.setData(data_plot.time, data_plot.position, **self.scatter_vis)
         self.velocityGraph.setData(data_plot.time, data_plot.velocity_smooth, **self.plot_vis)
         self.velocityScatter.setData(data_plot.time, data_plot.velocity, **self.scatter_vis)
         self.accelGraph.setData(data_plot.time, data_plot.acceleration_smooth, **self.plot_vis)
@@ -104,23 +104,23 @@ class BouncePlot(pg.GraphicsLayoutWidget):
 
         self.accelVLine.setPos(data_plot.impact_time)
         self.velocityVLine.setPos(data_plot.impact_time)
-        self.distanceVLine.setPos(data_plot.impact_time)
-        self.distanceVLineOut.setPos(data_plot.release_time)
+        self.positionVLine.setPos(data_plot.impact_time)
+        self.positionVLineOut.setPos(data_plot.release_time)
         self.accelHLine.setPos(data_plot.acceleration_thresh)
 
-        self.distanceSpeedInLine.setAngle(math.degrees(math.atan(data_plot.speed_in)))
-        self.distanceSpeedOutLine.setAngle(math.degrees(math.atan(data_plot.speed_out)))
-        self.distanceSpeedInLine.setPos((0,data_plot.speed_in_intercept))
-        self.distanceSpeedOutLine.setPos((0,data_plot.speed_out_intercept))
+        self.positionSpeedInLine.setAngle(math.degrees(math.atan(data_plot.speed_in)))
+        self.positionSpeedOutLine.setAngle(math.degrees(math.atan(data_plot.speed_out)))
+        self.positionSpeedInLine.setPos((0,data_plot.speed_in_intercept))
+        self.positionSpeedOutLine.setPos((0,data_plot.speed_out_intercept))
 
         self.speedInLine.setPos(data_plot.speed_in)
         self.speedOutLine.setPos(data_plot.speed_out)
 
-        self.distance.setXRange(data_plot.impact_time/2, data_plot.impact_time*1.5)
+        self.position.setXRange(data_plot.impact_time/2, data_plot.impact_time*1.5)
 
     def clean(self):
-        self.distanceGraph.setData([], [], **self.plot_vis)
-        self.distanceScatter.setData([], [], **self.scatter_vis)
+        self.positionGraph.setData([], [], **self.plot_vis)
+        self.positionScatter.setData([], [], **self.scatter_vis)
         self.velocityGraph.setData([], [], **self.plot_vis)
         self.velocityScatter.setData([], [], **self.scatter_vis)
         self.accelGraph.setData([], [], **self.plot_vis)
@@ -128,12 +128,12 @@ class BouncePlot(pg.GraphicsLayoutWidget):
 
         self.accelVLine.setPos(0)
         self.velocityVLine.setPos(0)
-        self.distanceVLine.setPos(0)
+        self.positionVLine.setPos(0)
         self.accelHLine.setPos(0)
-        self.distanceSpeedInLine.setAngle(0)
-        self.distanceSpeedOutLine.setAngle(0)
-        self.distanceSpeedInLine.setPos(0)
-        self.distanceSpeedOutLine.setPos(0)
+        self.positionSpeedInLine.setAngle(0)
+        self.positionSpeedOutLine.setAngle(0)
+        self.positionSpeedInLine.setPos(0)
+        self.positionSpeedOutLine.setPos(0)
 
         self.speedInLine.setPos(0)
         self.speedOutLine.setPos(0)
