@@ -18,6 +18,7 @@
 import os,sys
 import pyMRAW
 import imageio.v3 as iio
+from imageio.core.request import InitializationError
 import av # for pipreqs
 import numpy as np
 from abc import ABC
@@ -92,13 +93,26 @@ class VideoReaderMem(IVideoReader):
             raise FileNotFoundError(f'{filename} not found.')
         if  filename.endswith("cihx"):
             self._vr, info = pyMRAW.load_video(filename)
-            self._color_channels = 1
+            self._color_channels = int(info['EffectiveBit Depth']) // int(info["Color Bit"])
             self._number_of_frames = int(info["Total Frame"])
             self._bit_per_channel = int(info["Color Bit"])
             self._frame_rate = float(info["Record Rate(fps)"])
             self._pixel_scale = float(info["Pixel Scale"])
+        elif filename.endswith("mraw"):
+            meta_data_file = filename.replace("mraw", "cihx")
+            if os.path.exists(meta_data_file):
+                self._vr, info = pyMRAW.load_video(meta_data_file)
+                self._color_channels = int(info['EffectiveBit Depth']) // int(info["Color Bit"])
+                self._number_of_frames = int(info["Total Frame"])
+                self._bit_per_channel = int(info["Color Bit"])
+                self._frame_rate = float(info["Record Rate(fps)"])
+                self._pixel_scale = float(info["Pixel Scale"])
         else:
-            self._vr = iio.imread(filename, plugin="pyav", format="gray")
+            try:
+                self._vr = iio.imread(filename, plugin="pyav", format="gray")
+            except InitializationError as ex:
+                raise ValueError("Cannot open video due to the following error:\n" + str(ex))
+
         
             self._color_channels = self._vr[0].shape[-1]
             self._number_of_frames = self._vr[0].shape[0]
