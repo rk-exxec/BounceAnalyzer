@@ -93,9 +93,9 @@ class VideoReaderMem(IVideoReader):
             raise FileNotFoundError(f'{filename} not found.')
         if  filename.endswith("cihx"):
             self._vr, info = pyMRAW.load_video(filename)
-            self._color_channels = int(info['EffectiveBit Depth']) // int(info["Color Bit"])
+            self._color_channels = 1 #int(info['EffectiveBit Depth']) // int(info["Color Bit"])
             self._number_of_frames = int(info["Total Frame"])
-            self._bit_per_channel = int(info["Color Bit"])
+            self._bit_per_channel = int(info['EffectiveBit Depth'])
             self._frame_rate = float(info["Record Rate(fps)"])
             self._pixel_scale = float(info["Pixel Scale"])
         elif filename.endswith("mraw"):

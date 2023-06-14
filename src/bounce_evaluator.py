@@ -92,8 +92,14 @@ def bounce_eval(video: np.ndarray, info: VideoInfoPresets):
     max_deformation = np.abs(position[touch_pos] - position.max()).squeeze()
 
     # linefit on position before and after hit for velocity detection
-    pos_linefit_down = Polynomial(P.polyfit(time[:touch_pos], position[:touch_pos],deg=1))
-    pos_linefit_up = Polynomial(P.polyfit(time[release_pos:release_pos + line_fit_window], position[release_pos:release_pos + line_fit_window],deg=1))
+    down_window_start = (touch_pos - line_fit_window)
+    if down_window_start < 0 : down_window_start = 0
+
+    up_window_end = release_pos + line_fit_window
+    if up_window_end >= len(time): up_window_end = len(time) - 1
+
+    pos_linefit_down = Polynomial(P.polyfit(time[down_window_start:touch_pos], position[down_window_start:touch_pos],deg=1))
+    pos_linefit_up = Polynomial(P.polyfit(time[release_pos:up_window_end], position[release_pos:up_window_end],deg=1))
     coef_of_restitution = abs(pos_linefit_up.coef[1] / pos_linefit_down.coef[1])
 
 
