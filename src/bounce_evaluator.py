@@ -17,11 +17,13 @@
 
 
 import numpy as np
-
+import logging
+logger = logging.getLogger(__name__)
 import cv2
 from scipy.ndimage import uniform_filter1d
 from scipy.signal import savgol_filter, wiener
 from scipy.interpolate import splprep, splev,splrep, interp1d
+from scipy.signal import argrelmin
 from numpy.polynomial import Polynomial
 from numpy.polynomial import polynomial as P
 
@@ -30,7 +32,7 @@ from data_classes import BounceData, VideoInfoPresets
 USE_SPLINE_CONTOUR = False
 
 def bounce_eval(video: np.ndarray, info: VideoInfoPresets):
-        
+    logger.info("Start bounce analysis")
     frame_width,frame_height = info.shape
     total_frames = info.length
     time_step =  1/info.frame_rate
@@ -132,7 +134,7 @@ def bounce_eval(video: np.ndarray, info: VideoInfoPresets):
         video_name=info.filename
     )
 
-    
+    logger.info("Done analyzing")
     return data, streak
 
 
@@ -185,6 +187,9 @@ def _find_contour(img: np.ndarray, info:VideoInfoPresets):
 
     frac_idx = lower_idx + (upper_idx - lower_idx) * (thresh - lower_values)/delta
     contour_y = np.where(delta == 0, upper_idx, frac_idx)
+
+    # contour_y = upper_idx
+
     # contour = np.array([clean_x, frac_idx])
     
     # contours, _ = cv2.findContours(cvimg.astype(np.uint8), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
@@ -202,11 +207,33 @@ def _find_contour(img: np.ndarray, info:VideoInfoPresets):
 def _clean_contour(contour, num_frames):
     # remove contour parts that touch the image border
     del_pos = np.argwhere(contour[1]==0)
+    #find gaps, gaps represent where contour is not touching upper image border
+    jmps = []
+    for i in range(len(del_pos)-1):
+        if abs(del_pos[i]-del_pos[i+1]) > 20:
+            jmps.append(i)
+
+    # remove everything after first jump, first jump being the actual bounce
+    if jmps: 
+        # if bounce finishes way before end of video, prevent contour from being used outside of bounce event
+        del_low = slice(del_pos[:jmps[0]].max())
+        del_high = slice(del_pos[jmps[0]+1:].min(), None)
+        # del_high = np.argwhere(del_pos > contour[0][jmps[0]+1])
+        contour = np.delete(contour.T, del_low, axis=0).T
+        contour = np.delete(contour.T, del_high, axis=0).T
+    else:
+        contour = np.delete(contour.T, del_pos, axis=0).T
+    
+    # another pass to cleanup fragments
+    del_pos = np.argwhere(contour[1]==0)
     contour = np.delete(contour.T, del_pos, axis=0).T
+
     del_pos = np.argwhere(contour[0]==0)
     contour = np.delete(contour.T, del_pos, axis=0).T
+
     del_pos = np.argwhere(contour[0]==(num_frames-1))
     contour = np.delete(contour.T, del_pos, axis=0).T
+
     #remove beginning and end, possible artifacts
     contour = contour.T[5:-5].T
     # remove duplicate x values
