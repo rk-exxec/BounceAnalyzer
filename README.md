@@ -21,7 +21,7 @@ BounceAnalyzer can do batch processing on entire folders, simply drag a folder o
 
 ## Installation
 
-Uses Python 3.9.4 or higher 
+Uses Python 3.9.4 or higher  
 Clone the repo, then execute `pip install -r requirements.txt` to install the required packages.
 
 ## Usage
