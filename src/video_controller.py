@@ -25,6 +25,7 @@ import pandas as pd
 import cv2
 
 import logging
+logger = logging.getLogger(__name__)
 from PySide6.QtCore import  Slot, QTimer, Signal, QObject
 from PySide6.QtWidgets import QFileDialog, QMessageBox, QInputDialog
 

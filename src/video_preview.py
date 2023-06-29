@@ -16,6 +16,8 @@
 
 import cv2
 import numpy as np
+import logging
+logger = logging.getLogger(__name__)
 
 from PySide6 import QtGui
 from PySide6.QtOpenGLWidgets import QOpenGLWidget

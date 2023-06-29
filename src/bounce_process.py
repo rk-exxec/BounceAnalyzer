@@ -250,7 +250,7 @@ class App(QApplication):
 
 
 def initialize_logger(out_dir, handlers=None):
-    logger = logging.getLogger("bounce")
+    logger = logging.getLogger(__name__)
     logger.setLevel(logging.DEBUG)
      
     # create console handler and set level to info
@@ -275,7 +275,6 @@ if __name__ == "__main__":
     app = App(sys.argv)
     app.load_main()
     # setup logging
-    # global logger
     logger = initialize_logger("./log", app.window.textEdit)
     
     app.processEvents()

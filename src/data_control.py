@@ -15,6 +15,7 @@
 #     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import logging
+logger = logging.getLogger(__name__)
 
 from pathlib import Path
 from dataclasses import asdict
@@ -115,12 +116,13 @@ class DataControl(QObject):
         :param droplet: droplet data
         :param cycle: current cycle in case of repeated measurements
         """
-        
+        logger.info("Refreshing data")
         self.bounce_data = bounce_data
         # self.eval_data = eval_data
         self.streak_image = streak
 
         self.ui.tableView.redraw_table_signal.emit(pd.DataFrame.from_dict(asdict(bounce_data)))
+        logger.info("Updating plots")
         self.update_plots()
         # TODO add scatter overly for live plot widget, etc, do all datahandling in this datacontrol
         self.ui.tabWidget.setCurrentIndex(1)
@@ -172,6 +174,8 @@ class DataControl(QObject):
         if not filename:
             filename = self.video_path.with_suffix(".json")
         filename = Path(filename).with_suffix(".json")
+
+        logger.info(f"Saving data as {filename}")
 
         if self.bounce_data is not None:
             self.bounce_data.to_json_file(filename)

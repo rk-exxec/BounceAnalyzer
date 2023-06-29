@@ -19,6 +19,7 @@ import sys
 import pandas as pd
 import pyqtgraph as pg
 import logging
+logger = logging.getLogger(__name__)
 import math
 
 from data_classes import BounceData
@@ -92,7 +93,7 @@ class BouncePlot(pg.GraphicsLayoutWidget):
         self.tab_visible = False
         self.show()
 
-        logging.info("initialized live plot")
+        logger.info("initialized live plot")
         
     def plot_graphs(self, data_plot: BounceData):
         self.positionGraph.setData(data_plot.time, data_plot.position_smooth, **self.plot_vis)
