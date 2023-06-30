@@ -41,6 +41,7 @@ def bounce_eval(video: np.ndarray, info: VideoInfoPresets):
     savgol_filter_window = int(info.frame_rate * 0.0007) # approx 21 at 30000 fps seems to work
     pixel_scale = (0.0000197) #self._video_reader.reader.pixel_scale
     accel_thresh = -abs(info.accel_thresh)
+
     
     # generate streak image
     streak = video.min(axis=2).T
@@ -48,7 +49,6 @@ def bounce_eval(video: np.ndarray, info: VideoInfoPresets):
     # find contours in streak image
     contour_x, contour_y, _ = _find_contour(streak, info)
     # contour_clean = _clean_contour(contour, N)
-
 
     # calculate pixel scale
     if not info.pixel_scale:
@@ -58,82 +58,96 @@ def bounce_eval(video: np.ndarray, info: VideoInfoPresets):
     time = contour_x * time_step
     position = contour_y * pixel_scale
 
-    if USE_SPLINE_CONTOUR:
-        m = len(contour_x)
-        spl = splrep(contour_x, contour_y, s=np.sqrt(2*m)*spline_smoothing_mult)
-        y_new = splev(contour_x, spl, der=0)
-        position_smoothed = y_new * pixel_scale
-
-        velocity = np.gradient(savgol_filter(position, savgol_filter_window, 5, mode="interp"), time)
-        velocity_smoothed = np.gradient(position_smoothed, time)
-
-        accel = savgol_filter(np.gradient(velocity, time), savgol_filter_window, 5, mode="interp")
-        accel_smoothed = np.gradient(velocity_smoothed, time)
-    else:
-        position_smoothed = savgol_filter(position, savgol_filter_window, 5, mode="interp")
-
-        velocity = np.gradient(position, time)
-        velocity_smoothed = np.gradient(position_smoothed, time)
-
-        accel = np.gradient(velocity_smoothed, time)
-        # accel_s = np.gradient(velocity_fs, time)
-        accel_smoothed = savgol_filter(accel, savgol_filter_window, 5, mode="interp")
-
-
-    max_acc_idx = np.abs(accel_smoothed).argmax()
-    max_acceleration = accel[max_acc_idx]
-
-    # image index and time where acceleration crosses threshold (just before max accel)
-    touch_pos = max_acc_idx - (np.argwhere(np.flip(accel_smoothed[:max_acc_idx])>=accel_thresh)[0]).item()
-    touch_time = touch_pos*time_step + time[0]
-    # release is, where object reaches same position as at touch time
-    release_pos = max_acc_idx + (np.argwhere(position[max_acc_idx:]<=position[touch_pos])[0]).item()
-    release_time = release_pos*time_step + time[0]
-
-    max_dist = position.argmax()
-    max_deformation = np.abs(position[touch_pos] - position.max()).squeeze()
-
-    # linefit on position before and after hit for velocity detection
-    down_window_start = (touch_pos - line_fit_window)
-    if down_window_start < 0 : down_window_start = 0
-
-    up_window_end = release_pos + line_fit_window
-    if up_window_end >= len(time): up_window_end = len(time) - 1
-
-    pos_linefit_down = Polynomial(P.polyfit(time[down_window_start:touch_pos], position[down_window_start:touch_pos],deg=1))
-    pos_linefit_up = Polynomial(P.polyfit(time[release_pos:up_window_end], position[release_pos:up_window_end],deg=1))
-    coef_of_restitution = abs(pos_linefit_up.coef[1] / pos_linefit_down.coef[1])
-
-
     data = BounceData(
         contour_x=contour_x,
-        contour_y=y_new if USE_SPLINE_CONTOUR else contour_y,
+        contour_y=contour_y,
         time=time,
         position=position,
-        velocity=velocity,
-        acceleration=accel,
-        position_smooth=position_smoothed,
-        velocity_smooth=velocity_smoothed,
-        acceleration_smooth=accel_smoothed,
-        acceleration_thresh=accel_thresh,
-        impact_idx=touch_pos,
-        impact_time=touch_time,
-        release_idx=release_pos,
-        release_time=release_time,
-        max_deformation=max_deformation,
-        max_acceleration=max_acceleration,
-        cor=coef_of_restitution,
-        speed_in=pos_linefit_down.coef[1],
-        speed_out=pos_linefit_up.coef[1],
-        speed_in_intercept=pos_linefit_down.coef[0],
-        speed_out_intercept=pos_linefit_up.coef[0],
         video_framerate=info.frame_rate,
         video_resolution= f"{frame_width}x{frame_height}",
         video_num_frames=total_frames,
         video_pixel_scale=pixel_scale,
-        video_name=info.filename
+        video_name=info.filename,
+        acceleration_thresh=accel_thresh
     )
 
+    try:
+        if USE_SPLINE_CONTOUR:
+            m = len(contour_x)
+            spl = splrep(contour_x, contour_y, s=np.sqrt(2*m)*spline_smoothing_mult)
+            y_new = splev(contour_x, spl, der=0)
+            data.contour_y = y_new
+            position_smoothed = y_new * pixel_scale
+
+            velocity = np.gradient(savgol_filter(position, savgol_filter_window, 5, mode="interp"), time)
+            velocity_smoothed = np.gradient(position_smoothed, time)
+
+            accel = savgol_filter(np.gradient(velocity, time), savgol_filter_window, 5, mode="interp")
+            accel_smoothed = np.gradient(velocity_smoothed, time)
+        else:
+            savgol_filter_window = min(savgol_filter_window, len(position))
+            position_smoothed = savgol_filter(position, savgol_filter_window, 5, mode="interp")
+
+            velocity = np.gradient(position, time)
+            velocity_smoothed = np.gradient(position_smoothed, time)
+
+            accel = np.gradient(velocity_smoothed, time)
+            # accel_s = np.gradient(velocity_fs, time)
+            accel_smoothed = savgol_filter(accel, savgol_filter_window, 5, mode="interp")
+
+        data.position_smooth = position_smoothed
+        data.velocity = velocity
+        data.velocity_smooth = velocity_smoothed
+        data.acceleration = accel
+        data.acceleration_smooth = accel_smoothed
+
+        max_acc_idx = np.abs(accel_smoothed).argmax()
+        max_acceleration = accel[max_acc_idx]
+
+        data.max_acceleration = max_acceleration
+
+        # image index and time where acceleration crosses threshold (just before max accel)
+        touch_pos = max_acc_idx - (np.argwhere(np.flip(accel_smoothed[:max_acc_idx])>=accel_thresh)[0]).item()
+        touch_time = touch_pos*time_step + time[0]
+
+        data.impact_idx = touch_pos
+        data.impact_time = touch_time
+        # release is, where object reaches same position as at touch time
+        try:
+            release_pos = max_acc_idx + (np.argwhere(position[max_acc_idx:]<=position[touch_pos])[0]).item()
+        except IndexError:
+            # ball was not released, set release pos to be symmetrical to touch pos
+            release_pos = (max_acc_idx - touch_pos) + max_acc_idx
+        release_time = release_pos*time_step + time[0]
+
+        data.release_idx = release_pos
+        data.release_time = release_time
+        
+        max_dist = position.argmax()
+        max_deformation = np.abs(position[touch_pos] - position.max()).squeeze()
+
+        data.max_deformation=max_deformation
+
+        # linefit on position before and after hit for velocity detection
+        down_window_start = (touch_pos - line_fit_window)
+        if down_window_start < 0 : down_window_start = 0
+
+        up_window_end = release_pos + line_fit_window
+        if up_window_end >= len(time): up_window_end = len(time) - 1
+
+        pos_linefit_down = Polynomial(P.polyfit(time[down_window_start:touch_pos], position[down_window_start:touch_pos],deg=1))
+        pos_linefit_up = Polynomial(P.polyfit(time[release_pos:up_window_end], position[release_pos:up_window_end],deg=1))
+        coef_of_restitution = abs(pos_linefit_up.coef[1] / pos_linefit_down.coef[1])
+
+        data.cor=coef_of_restitution
+        data.speed_in=pos_linefit_down.coef[1]
+        data.speed_out=pos_linefit_up.coef[1]
+        data.speed_in_intercept=pos_linefit_down.coef[0]
+        data.speed_out_intercept=pos_linefit_up.coef[0]
+
+    except Exception as e:
+        logger.error("Bounce analysis not finished due to:\n" + str(e))
+    
     logger.info("Done analyzing")
     return data, streak
 
@@ -210,7 +224,7 @@ def _clean_contour(contour, num_frames):
     #find gaps, gaps represent where contour is not touching upper image border
     jmps = []
     for i in range(len(del_pos)-1):
-        if abs(del_pos[i]-del_pos[i+1]) > 20:
+        if abs(del_pos[i]-del_pos[i+1]) > 100:
             jmps.append(i)
 
     # remove everything after first jump, first jump being the actual bounce
@@ -222,7 +236,8 @@ def _clean_contour(contour, num_frames):
         contour = np.delete(contour.T, del_low, axis=0).T
         contour = np.delete(contour.T, del_high, axis=0).T
     else:
-        contour = np.delete(contour.T, del_pos, axis=0).T
+        # ball only touches image top once, assume beginning, remove everything before
+        contour = np.delete(contour.T, slice(del_pos.max()), axis=0).T
     
     # another pass to cleanup fragments
     del_pos = np.argwhere(contour[1]==0)

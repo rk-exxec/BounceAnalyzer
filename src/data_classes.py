@@ -41,15 +41,15 @@ class BounceData(JSONSerializable, JSONFileWizard):
 
     contour_x: list[int]
     contour_y: list[float]
-    time: list[float]
-    position: list[float]
-    velocity: list[float]
-    acceleration: list[float]
-    position_smooth: list[float]
-    velocity_smooth: list[float]
-    acceleration_smooth: list[float]
+    time: list[float] = field(default_factory=list)
+    position: list[float] = field(default_factory=list)
+    velocity: list[float] = field(default_factory=list)
+    acceleration: list[float] = field(default_factory=list)
+    position_smooth: list[float] = field(default_factory=list)
+    velocity_smooth: list[float] = field(default_factory=list)
+    acceleration_smooth: list[float] = field(default_factory=list)
 
-    acceleration_thresh: float
+    acceleration_thresh: float = 1800.0
     impact_idx: int = 0.0
     impact_time: float = 0.0
     release_idx: int = 0.0
