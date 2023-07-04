@@ -55,6 +55,9 @@ def bounce_eval(video: np.ndarray, info: VideoInfoPresets):
         pixel_scale = _get_scale(streak, contour_y, contour_x[0], info)
     else: pixel_scale = info.pixel_scale
 
+    if abs(contour_y.max() - contour_y.min()) < 40:
+        raise ValueError("No bounce detected!")
+
     time = contour_x * time_step
     position = contour_y * pixel_scale
 
@@ -179,7 +182,7 @@ def _central_diff(y,x):
     return res
 
 
-def _find_contour(img: np.ndarray, info:VideoInfoPresets):
+def _find_contour(img: np.ndarray, info:VideoInfoPresets) -> np.ndarray:
     """
     this determines the top contour of the streak image by fractional indexing (similar to LabView Threshold 1D)
     uses user defined relative threshold (to max value) for edge detection

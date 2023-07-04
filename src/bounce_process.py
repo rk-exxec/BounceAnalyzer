@@ -208,7 +208,7 @@ class BounceAnalyzer(QMainWindow, Ui_Bounce):
                 if self.abort_batch_flag: return
                 self.auto_process(f)
             except Exception as e:
-                res = QMessageBox.question(self,"Error encountered!", f"While prosessing the program encountered an error. Continue?\n\nError:\n{traceback.print_exc()}")
+                res = QMessageBox.question(self,"Error encountered!", f"While processing the program encountered an error. Continue?\n\nError:\n{e}")
                 if res == QMessageBox.StandardButton.Yes:
                     continue
                 else:
@@ -216,7 +216,7 @@ class BounceAnalyzer(QMainWindow, Ui_Bounce):
             finally:
                 cur_count += 1
                 self.update_progress_signal.emit(cur_count/total_count)
-            QApplication.processEvents()
+                QApplication.processEvents()
 
     def auto_process(self, filename):
         logging.info(f"Process file {filename}")
