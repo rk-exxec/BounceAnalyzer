@@ -17,20 +17,24 @@
 import os, sys
 sys.path.append('src')
 sys.path.append('qt')
+
 import logging
-import traceback
-from pathlib import Path
+logging.basicConfig(stream=sys.stdout, format='[%(asctime)s] %(levelname)s [%(filename)s.%(funcName)s:%(lineno)d] %(message)s', datefmt='%a, %d %b %Y %H:%M:%S',level=logging.DEBUG)
 #silences error on program quit, as handler is deleted before logger
 logging.raiseExceptions = False
 logging.getLogger("numba").setLevel(logging.WARNING)
-import warnings
+logger = logging.getLogger(__name__)
 
+import warnings
 warnings.filterwarnings('ignore', module='pyMRAW')
+
+import traceback
+from pathlib import Path
 
 from PySide6 import QtGui
 from PySide6.QtGui import QShortcut, QFont, QPixmap
 from PySide6.QtWidgets import QMainWindow, QApplication, QProgressBar, QMessageBox, QDialog, QFileDialog, QSplashScreen, QPushButton
-from PySide6.QtCore import QCoreApplication, Qt, Signal, Slot
+from PySide6.QtCore import QCoreApplication, Qt, Signal, Slot, QSettings
 
 from ui_bounce import Ui_Bounce
 from ui_patterndlg import Ui_PatternDialog
@@ -69,6 +73,7 @@ class BounceAnalyzer(QMainWindow, Ui_Bounce):
     update_progress_signal = Signal(float)
     def __init__(self):
         QMainWindow.__init__(self)
+        self.settings = QSettings()
         self.setupUi(self)
         self.statusBar().setFont(QFont("Consolas",10))
         self.progressBar = QProgressBar()
@@ -92,10 +97,22 @@ class BounceAnalyzer(QMainWindow, Ui_Bounce):
         self.tabWidget.widget(1).layout().activate()
         self.tabWidget.setCurrentIndex(0)
         self.register_action_events()
+        self.load_settings()
 
     def closeEvent(self, event):
+        self.store_settings()
         self.videoViewer.closeEvent(event)
         return super().closeEvent(event)
+    
+    def load_settings(self):
+        self.ballSizeSpin.setValue(float(self.settings.value("params/ballSize", 2.381)))
+        self.relThreshSpin.setValue(float(self.settings.value("params/relThresh", 0.7)))
+        self.accelThreshSpin.setValue(float(self.settings.value("params/accelThresh", 1800)))
+
+    def store_settings(self):
+        self.settings.setValue("params/ballSize", self.ballSizeSpin.value())
+        self.settings.setValue("params/relThresh", self.relThreshSpin.value())
+        self.settings.setValue("params/accelThresh", self.accelThreshSpin.value())
 
     def register_action_events(self):
         self.playBtn.clicked.connect(self.videoController.play)
@@ -146,6 +163,7 @@ class BounceAnalyzer(QMainWindow, Ui_Bounce):
             event.ignore()
 
     def bounce_eval(self):
+        self.store_settings()
         info = self.data_control.eval_params
         data, streak = bounce_eval(self.videoController.reader.image_array, info)
         self.data_control.update_data_signal.emit(data, streak)
@@ -170,6 +188,7 @@ class BounceAnalyzer(QMainWindow, Ui_Bounce):
             QMessageBox.critical(self, "Invalid Path", "Dropped file path is invalid!")
 
     def start_batch_process(self, root=""):
+        self.store_settings()
         dlg = PatternDialog(parent=self, root_path_prefill=root)
         if dlg.exec():
             root, pattern = dlg.values
@@ -178,13 +197,16 @@ class BounceAnalyzer(QMainWindow, Ui_Bounce):
             self.progressBar.setValue(0)
             self.progressBar.show()
             self.abortBatchBtn.show()
-            self.batch_process(glb)
-            self.batch_done()
+            error_files = self.batch_process(glb)
+            self.batch_done(error_files)
             # self.batch_thread = CallbackWorker(self.batch_process, glb, slotOnFinished=self.batch_done)
             # self.batch_thread.start()
 
-    def batch_done(self):
-        QMessageBox.information(self, "Done", "Batch processing done!")
+    def batch_done(self, error = None):
+        if error:
+            QMessageBox.information(self, "Done", "Batch processing done!\nDuring the processing of the following files, errors were encountered and the files skipped:\n" + "\n".join(error))
+        else:
+            QMessageBox.information(self, "Done", "Batch processing done!")
         self.progressBar.hide()
         self.abortBatchBtn.hide()
         self.abort_batch_flag = False
@@ -203,20 +225,23 @@ class BounceAnalyzer(QMainWindow, Ui_Bounce):
     def batch_process(self, files):
         total_count = len(files)
         cur_count = 0
+        error_files = list()
         for f in files:
             try:
                 if self.abort_batch_flag: return
                 self.auto_process(f)
             except Exception as e:
-                res = QMessageBox.question(self,"Error encountered!", f"While processing the program encountered an error. Continue?\n\nError:\n{e}")
-                if res == QMessageBox.StandardButton.Yes:
-                    continue
-                else:
-                    return
+                error_files.append(str(f))
+                # res = QMessageBox.question(self,"Error encountered!", f"While processing the program encountered an error. Continue?\n\nError:\n{e}")
+                # if res == QMessageBox.StandardButton.Yes:
+                #     continue
+                # else:
+                #     return
             finally:
                 cur_count += 1
                 self.update_progress_signal.emit(cur_count/total_count)
                 QApplication.processEvents()
+        return error_files
 
     def auto_process(self, filename):
         logging.info(f"Process file {filename}")
@@ -250,20 +275,12 @@ class App(QApplication):
 
 
 def initialize_logger(out_dir, handlers=None):
-    logger = logging.getLogger(__name__)
-    logger.setLevel(logging.DEBUG)
-     
-    # create console handler and set level to info
-    handler = logging.StreamHandler()
-    handler.setLevel(logging.DEBUG)
-
-    logger.addHandler(handler)
+    
 
     if handlers:
         handlers.setLevel(logging.DEBUG)
         logger.addHandler(handlers)
 
-    return logger
 
 if __name__ == "__main__":
 
@@ -274,8 +291,8 @@ if __name__ == "__main__":
     # init application
     app = App(sys.argv)
     app.load_main()
-    # setup logging
-    logger = initialize_logger("./log", app.window.textEdit)
+
+    logger.addHandler(app.window.textEdit)
     
     app.processEvents()
 

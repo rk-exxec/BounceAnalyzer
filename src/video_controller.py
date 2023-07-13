@@ -53,24 +53,24 @@ class VideoController(QObject):
 
     @Slot()
     def play(self):
-        logging.debug(f"Start playback of video @ {self.reader.frame_rate} FPS")
+        logger.debug(f"Start playback of video @ {self.reader.frame_rate} FPS")
         self._play_timer.setInterval(1000/self.reader.frame_rate)
         self._play_timer.start()
         #self.media_player.play()
 
     @Slot()
     def pause(self):
-        logging.debug("Pause playback of video")
+        logger.debug("Pause playback of video")
         self._play_timer.stop()
         #self.media_player.play()
 
     @Slot()
     def play_pause(self):
         if self._play_timer.isActive():
-            logging.debug("Pause playback of video")
+            logger.debug("Pause playback of video")
             self._play_timer.stop()
         else:
-            logging.debug(f"Start playback of video @ {self.reader.frame_rate} FPS")
+            logger.debug(f"Start playback of video @ {self.reader.frame_rate} FPS")
             self._play_timer.setInterval(1000/self.reader.frame_rate)
             self._play_timer.start()
 

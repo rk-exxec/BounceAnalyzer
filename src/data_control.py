@@ -32,6 +32,8 @@ from PIL import Image
 from video_controller import VideoController
 from data_classes import BounceData, VideoInfoPresets
 from video_reader import IVideoReader
+from bounce_plot import BouncePlot
+from streak_plot import StreakPlot
 
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
@@ -54,7 +56,7 @@ class DataControl(QObject):
         self._first_show = True
 
         self.video_path: Path = None
-        self.ball_size = 2.5e-3
+        self.ball_size = 2.5
         self.pixel_scale = None
         self.accel_thresh = 1500.0
         self.bit_depth = 8
@@ -65,8 +67,8 @@ class DataControl(QObject):
         self._plot_thread: Worker = None
         self.ui: Ui_Bounce = self.parent()
 
-        self.bounce_plot = self.ui.positionGraph
-        self.streak_plot = self.ui.streakImage
+        self.bounce_plot: BouncePlot = self.ui.positionGraph
+        self.streak_plot: StreakPlot = self.ui.streakImage
 
         self.connect_signals()  
 
@@ -97,7 +99,7 @@ class DataControl(QObject):
 
     @Slot(float)
     def update_ball_size(self, value):
-        self.ball_size = value/1000
+        self.ball_size = value
 
     @Slot(float)
     def update_scale(self, value):
@@ -121,7 +123,7 @@ class DataControl(QObject):
         # self.eval_data = eval_data
         self.streak_image = streak
 
-        self.ui.tableView.redraw_table_signal.emit(pd.DataFrame.from_dict(asdict(bounce_data)))
+        self.ui.tableView.redraw_table_signal.emit(bounce_data)
         logger.info("Updating plots")
         self.update_plots()
         # TODO add scatter overly for live plot widget, etc, do all datahandling in this datacontrol
@@ -138,9 +140,11 @@ class DataControl(QObject):
         self.set_info(self.bounce_data)
 
     def plot_graphs(self, data):
+        logger.debug("Plotting graphs")
         self.ui.positionGraph.plot_graphs(data)
 
     def plot_image(self, streak, data):
+        logger.debug("Plotting image")
         self.ui.streakImage.plot_image(streak, data)
 
     def set_info(self, data:BounceData):
@@ -150,7 +154,7 @@ class DataControl(QObject):
 
         self.ui.maxDeformLbl.setText(f'{data.max_deformation*1000:0.3f} mm')
         self.ui.maxAccelLbl.setText(f'{data.max_acceleration:0.1f} m/s^2')
-        self.ui.pxScaleLbl.setText(f'{data.video_pixel_scale*1000:.5f} mm/px')
+        self.ui.pxScaleLbl.setText(f'{data.video_pixel_scale:.5f} mm/px')
 
     def clear_plots(self):
         self.ui.streakImage.clean()

@@ -47,19 +47,19 @@ def bounce_eval(video: np.ndarray, info: VideoInfoPresets):
     streak = video.min(axis=2).T
 
     # find contours in streak image
-    contour_x, contour_y, _ = _find_contour(streak, info)
+    contour_x, contour_y, thresh_streak = _find_contour(streak, info)
     # contour_clean = _clean_contour(contour, N)
 
     # calculate pixel scale
     if not info.pixel_scale:
-        pixel_scale = _get_scale(streak, contour_y, contour_x[0], info)
+        pixel_scale = _get_scale(thresh_streak, contour_y, contour_x[0], info)
     else: pixel_scale = info.pixel_scale
 
     if abs(contour_y.max() - contour_y.min()) < 40:
         raise ValueError("No bounce detected!")
 
     time = contour_x * time_step
-    position = contour_y * pixel_scale
+    position = contour_y * (pixel_scale / 1000)
 
     data = BounceData(
         contour_x=contour_x,
@@ -143,8 +143,8 @@ def bounce_eval(video: np.ndarray, info: VideoInfoPresets):
         coef_of_restitution = abs(pos_linefit_up.coef[1] / pos_linefit_down.coef[1])
 
         data.cor=coef_of_restitution
-        data.speed_in=pos_linefit_down.coef[1]
-        data.speed_out=pos_linefit_up.coef[1]
+        data.speed_in=pos_linefit_down.coef[1] # m/s
+        data.speed_out=pos_linefit_up.coef[1] # m/s
         data.speed_in_intercept=pos_linefit_down.coef[0]
         data.speed_out_intercept=pos_linefit_up.coef[0]
 
@@ -188,12 +188,15 @@ def _find_contour(img: np.ndarray, info:VideoInfoPresets) -> np.ndarray:
     uses user defined relative threshold (to max value) for edge detection
     """
     cvimg = int(2**info.bit_depth-1) - img #invert image by subtracting it from fully white max value
-    # blur = cvimg #cv2.GaussianBlur(cvimg, (5,5), 1)#
+    img = cv2.GaussianBlur(img, (5,5), 1)#
 
     thresh = info.rel_threshold * cvimg.max()
     thresh_idx = np.argmin(cvimg <= thresh, axis=0)
     thresh_x = np.arange(len(thresh_idx))
     contour_x, upper_idx = _clean_contour(np.array([thresh_x, thresh_idx]), info.length)
+
+    # calculate thresholded image for further processing down the line
+    _, thresh_img = cv2.threshold(img, (1-info.rel_threshold) * img.max(), int(2**info.bit_depth-1), cv2.THRESH_BINARY)
 
     # fractional indexing to return smoother position line
     lower_idx = upper_idx - 1
@@ -205,21 +208,7 @@ def _find_contour(img: np.ndarray, info:VideoInfoPresets) -> np.ndarray:
     frac_idx = lower_idx + (upper_idx - lower_idx) * (thresh - lower_values)/delta
     contour_y = np.where(delta == 0, upper_idx, frac_idx)
 
-    # contour_y = upper_idx
-
-    # contour = np.array([clean_x, frac_idx])
-    
-    # contours, _ = cv2.findContours(cvimg.astype(np.uint8), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
-    # # get the contour that has the least mean y value, which should be the upper most contour
-    # avg_y = [cont.T[1].mean() for cont in contours]
-    # idx = np.argmin(avg_y)
-    # contour = np.asarray(contours[idx]).squeeze().T
-
-    # _, cvimg = cv2.threshold(blur, 10, 255, type=cv2.THRESH_BINARY_INV)
-    # contour_y = np.argmin(cvimg, axis=0)
-    # contour_x = np.arange(len(contour_y))
-    # contour = np.array([contour_x, contour_y])
-    return contour_x, contour_y, cvimg
+    return contour_x, contour_y, thresh_img
 
 def _clean_contour(contour, num_frames):
     # remove contour parts that touch the image border
@@ -265,7 +254,7 @@ def _get_scale(streak, y_values, first_x, info: VideoInfoPresets):
         # calculate height of streak
         line = streak.T[idx]
         max_val = line.max()
-        top_border = np.argmax(line<max_val)
+        top_border = np.argmax(line < max_val)
         bottom_border = np.argmax(line[top_border+1:] == max_val) + top_border+1
         return abs(bottom_border - top_border)
 
@@ -273,9 +262,11 @@ def _get_scale(streak, y_values, first_x, info: VideoInfoPresets):
 
     # sample multiple positions and average for more accurate result
     # exclude regions, where surface and object overlap, or object is cut off
-    for i,idx in enumerate(np.linspace(first_x+5, y_values.argmax() - 10, 5, dtype=int)):
+    pos_range = np.linspace(first_x+5, y_values.argmax() - 20, 5, dtype=int)
+    for i,idx in enumerate(pos_range):
         height[i] = get_obj_px_height(idx)
     px_delta = height.mean()
-
+    
     scale = info.ball_size / px_delta
+    logger.debug(f"Pixelscale: {scale:0.4f} | {height} | {pos_range}")
     return scale

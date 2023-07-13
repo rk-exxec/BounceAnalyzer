@@ -19,18 +19,37 @@ from PySide6.QtCore import Signal, Slot
 from PySide6.QtWidgets import QTableWidget, QTableWidgetItem
 
 import pandas as pd
+from data_classes import BounceData
+from dataclasses import asdict
 
 
 class TableControl(QTableWidget):
     """Derivative of QTableWidget with support to draw a pandas dataframe
     """
-    redraw_table_signal = Signal(pd.DataFrame)
+    redraw_table_signal = Signal(BounceData)
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.redraw_table_signal.connect(self.redraw_table)
+        self.redraw_table_signal.connect(self.update_data)
+        self._needs_update = False
+        self.data = None
 
-    @Slot(pd.DataFrame)
+    def showEvent(self,event) -> None:
+        if self._needs_update and self.data != None:
+            self.redraw_table(pd.DataFrame.from_dict(asdict(self.data)))
+            self._needs_update = False
+
+        return super().show()
+    
+    @Slot(BounceData)
+    def update_data(self, data:BounceData):
+        self.data = data
+        if not self.isVisible():
+            self._needs_update = True
+        else:
+            self.redraw_table(pd.DataFrame.from_dict(asdict(data)))
+
+    # @Slot(pd.DataFrame)
     def redraw_table(self, data: pd.DataFrame):
         """ Redraw table with contents of dataframe """
         n_rows, n_cols = data.shape
