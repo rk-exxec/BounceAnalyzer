@@ -104,6 +104,7 @@ class VideoController(QObject):
         self.video_name = Path(path).stem
         self.ui.seekBar.setMaximum(len(self.reader) - 1)
         self.ui.seekBar.setMinimum(0)
+        self.ui.window().setWindowTitle(f"BounceAnalyzer - {path}")
         self.player.update_shape(self.reader.frame_shape)
         self.read_image(self.ui.seekBar.sliderPosition())
         self.loaded_video_signal.emit(str(path), self.reader)

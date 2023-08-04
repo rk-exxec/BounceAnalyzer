@@ -216,6 +216,7 @@ class DataControl(QObject):
         """
         file = Path(file)
         self.clear_plots()
+        self.ui.window().setWindowTitle(f"BounceAnalyzer - {file}")
 
         # check if the wrong file was dropped by accident, and correct file names
         if file.suffix == ".csv":
