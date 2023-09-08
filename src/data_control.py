@@ -203,7 +203,7 @@ class DataControl(QObject):
             eval_data["img_rel_threshold"] = self.rel_threshold
 
             eval_data.to_csv(filename.parent/(filename.stem + "_eval.csv"), sep='\t', header=True, index=False)
-        if self.streak_image is not None: Image.fromarray(self.streak_image).save(filename.with_stem(filename.stem + "_streak").with_suffix(".png"))
+        if self.streak_image is not None: Image.fromarray((self.streak_image >> 4).astype(np.uint8)).save(filename.with_stem(filename.stem + "_streak").with_suffix(".png"))
 
     def save_dialog(self):
         dlg = QFileDialog.getSaveFileName(parent=self.parent(), caption="Save Data", dir=str(self.video_path.with_suffix(".csv")), filter="Comma Separated Values (*.csv)")
