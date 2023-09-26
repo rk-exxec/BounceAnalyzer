@@ -44,7 +44,7 @@ class DataControl(QObject):
     """ class for data and file control """
     update_plot_signal = Signal(float,float)
     # update_data_signal = Signal(pd.DataFrame, pd.DataFrame, np.ndarray, np.ndarray)
-    update_data_signal = Signal(BounceData, np.ndarray)
+    update_data_signal = Signal(BounceData, np.ndarray, np.ndarray)
     data_update_done_signal = Signal()
     def __init__(self, video_controller, parent=None) -> None:
         super().__init__(parent=parent)
@@ -52,7 +52,8 @@ class DataControl(QObject):
 
         self.video_controller: VideoController = video_controller
         self.bounce_data : BounceData = None
-        self.streak_image: np.ndarray = None
+        self.streak_image_y: np.ndarray = None
+        self.streak_image_x: np.ndarray = None
         self._first_show = True
 
         self.video_path: Path = None
@@ -110,7 +111,7 @@ class DataControl(QObject):
 
     # @Slot(pd.DataFrame, pd.DataFrame, np.ndarray, np.ndarray)
     @Slot(BounceData, np.ndarray)
-    def update_data(self, bounce_data: BounceData, streak: np.ndarray):
+    def update_data(self, bounce_data: BounceData, streak_y: np.ndarray, streak_x: np.ndarray):
         """ 
         add new datapoint to dataframe and invoke redrawing of table
         
@@ -121,7 +122,8 @@ class DataControl(QObject):
         logger.info("Refreshing data")
         self.bounce_data = bounce_data
         # self.eval_data = eval_data
-        self.streak_image = streak
+        self.streak_image_y = streak_y
+        self.streak_image_x = streak_x
 
         self.ui.tableView.redraw_table_signal.emit(bounce_data)
         logger.info("Updating plots")
@@ -135,7 +137,7 @@ class DataControl(QObject):
 
     def update_plots(self):
         self.clear_plots()
-        self.plot_image(self.streak_image, self.bounce_data)
+        self.plot_image(self.streak_image_y, self.bounce_data, self.streak_image_x)
         self.plot_graphs(self.bounce_data)
         self.set_info(self.bounce_data)
 
@@ -143,9 +145,9 @@ class DataControl(QObject):
         logger.debug("Plotting graphs")
         self.ui.positionGraph.plot_graphs(data)
 
-    def plot_image(self, streak, data):
+    def plot_image(self, streak_y, data, streak_x):
         logger.debug("Plotting image")
-        self.ui.streakImage.plot_image(streak, data)
+        self.ui.streakImage.plot_image(streak_y, data, streak_x)
 
     def set_info(self, data:BounceData):
         self.ui.corLbl.setText(f"{data.cor:0.3f}")
@@ -203,7 +205,8 @@ class DataControl(QObject):
             eval_data["img_rel_threshold"] = self.rel_threshold
 
             eval_data.to_csv(filename.parent/(filename.stem + "_eval.csv"), sep='\t', header=True, index=False)
-        if self.streak_image is not None: Image.fromarray((self.streak_image >> 4).astype(np.uint8)).save(filename.with_stem(filename.stem + "_streak").with_suffix(".png"))
+        if self.streak_image_y is not None: Image.fromarray((self.streak_image_y >> 4).astype(np.uint8)).save(filename.with_stem(filename.stem + "_streak").with_suffix(".png"))
+        if self.streak_image_x is not None: Image.fromarray((self.streak_image_x >> 4).astype(np.uint8)).save(filename.with_stem(filename.stem + "_streak_x").with_suffix(".png"))
 
     def save_dialog(self):
         dlg = QFileDialog.getSaveFileName(parent=self.parent(), caption="Save Data", dir=str(self.video_path.with_suffix(".csv")), filter="Comma Separated Values (*.csv)")

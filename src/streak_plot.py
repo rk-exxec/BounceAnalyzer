@@ -28,6 +28,10 @@ class StreakPlot(pg.PlotWidget):
     def __init__(self, parent = None):
         super().__init__(parent=parent)
 
+        self.streak_y = None
+        self.streak_x = None
+        self.shown_image = 0 # 0 is y, 1 is x
+
         pg.setConfigOptions(antialias=True)
         self.plotItem.clear()
         
@@ -36,6 +40,9 @@ class StreakPlot(pg.PlotWidget):
         self.plot_item = pg.PlotDataItem()
         self.plot_item.setPen(pg.mkPen(color="r", width=2, cosmetic=True))
         self.plotItem.addItem(self.plot_item)
+        self.plot_x_item = pg.PlotDataItem()
+        self.plot_x_item.setPen(pg.mkPen(color=(243, 102, 250), width=2, cosmetic=True))
+        self.plotItem.addItem(self.plot_x_item)
         self.scale_detect_item = pg.PlotDataItem()
         self.scale_detect_item.setPen(pg.mkPen(color="y", width=1, cosmetic=True))
         self.plotItem.addItem(self.scale_detect_item)
@@ -63,16 +70,26 @@ class StreakPlot(pg.PlotWidget):
         logger.info("initialized streak plot")
         
 
-    def plot_image(self, streak, data: BounceData):
+    def plot_image(self, streak, data: BounceData, streak_x = None):
         logger = logging.getLogger(__name__)
         logger.debug("Plotting streak image")
         self.image_item.setImage(streak.T)
+        self.streak_y = streak
+        self.streak_x = streak_x
         logger.debug("Plotting streak contour")
         self.plot_item.setData(data.contour_x, data.contour_y)
+        if data.has_x_deflection_data: self.plot_x_item.setData(data.x_defl_contour_x, data.x_defl_contour_y)
         self.scale_detect_item.setData([data.contour_x[10],data.contour_x[10]], [data.contour_y[10], data.contour_y[10] + 2.381/data.video_pixel_scale])
         self.x_scale_item.setData([10, 10 + 1e-3*data.video_framerate], [400, 400])
         self.y_scale_item.setData([10, 10], [400, 400 - 1/data.video_pixel_scale])
-   
+
+    def toggle_image(self):
+        if self.shown_image == 0 and not self.streak_x is None:
+            self.image_item.setImage(self.streak_x.T)
+            self.shown_image = 1
+        else:
+            self.image_item.setImage(self.streak_y.T)
+            self.shown_image = 0
 
     def vline(self, x, color, cosmetic=True, width=2):
         self.plotItem.addItem(pg.InfiniteLine(x, angle = 90, pen=pg.mkPen(color=color, width=width, cosmetic=cosmetic)))
@@ -83,6 +100,7 @@ class StreakPlot(pg.PlotWidget):
     def clean(self):
         self.image_item.clear()
         self.plot_item.clear()
+        self.plot_x_item.clear()
         self.x_scale_item.clear()
         self.y_scale_item.clear()
         self.scale_detect_item.clear()

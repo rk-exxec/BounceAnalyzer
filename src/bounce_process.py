@@ -130,6 +130,7 @@ class BounceAnalyzer(QMainWindow, Ui_Bounce):
         self.update_progress_signal.connect(self.update_progress)
         
         self.saveDataBtn.clicked.connect(self.data_control.save_dialog)
+        self.toggleStreakBtn.clicked.connect(self.streakImage.toggle_image)
 
         # self.actionCalibrate_Scale.triggered.connect(self.videoController.calib_size)
         # self.actionDelete_Scale.triggered.connect(self.videoController.remove_size_calib)
@@ -165,8 +166,8 @@ class BounceAnalyzer(QMainWindow, Ui_Bounce):
     def bounce_eval(self):
         self.store_settings()
         info = self.data_control.eval_params
-        data, streak = bounce_eval(self.videoController.reader.image_array, info)
-        self.data_control.update_data_signal.emit(data, streak)
+        data, streak_y, streak_x = bounce_eval(self.videoController.reader.image_array, info)
+        self.data_control.update_data_signal.emit(data, streak_y, streak_x)
 
     @Slot(list)
     def file_dropped(self, files):
