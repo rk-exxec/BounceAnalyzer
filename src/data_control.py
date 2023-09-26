@@ -203,6 +203,9 @@ class DataControl(QObject):
             eval_data["video_pixel_scale"] = self.bounce_data.video_pixel_scale
             eval_data["video_name"] = self.bounce_data.video_name
             eval_data["img_rel_threshold"] = self.rel_threshold
+            eval_data["x_defl_detected"] = self.bounce_data.has_x_deflection_data
+            eval_data["x_defl_speed_in"] = self.bounce_data.x_defl_speed_in
+            eval_data["x_defl_speed_out"] = self.bounce_data.x_defl_speed_out
 
             eval_data.to_csv(filename.parent/(filename.stem + "_eval.csv"), sep='\t', header=True, index=False)
         if self.streak_image_y is not None: Image.fromarray((self.streak_image_y >> 4).astype(np.uint8)).save(filename.with_stem(filename.stem + "_streak").with_suffix(".png"))
