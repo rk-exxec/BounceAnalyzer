@@ -131,7 +131,7 @@ class DataControl(QObject):
         # TODO add scatter overly for live plot widget, etc, do all datahandling in this datacontrol
         self.ui.tabWidget.setCurrentIndex(1)
         if self.save_on_data_event:
-            self.save_data()
+            self.save_data(self.target_path)
             self.save_on_data_event = False
         self.data_update_done_signal.emit()
 
@@ -180,6 +180,7 @@ class DataControl(QObject):
         if not filename:
             filename = self.video_path.with_suffix(".json")
         filename = Path(filename).with_suffix(".json")
+        filename.parent.mkdir(parents=True, exist_ok=True)
 
         logger.info(f"Saving data as {filename}")
 

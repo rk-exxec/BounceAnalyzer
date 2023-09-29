@@ -49,17 +49,23 @@ class PatternDialog(QDialog, Ui_PatternDialog):
         QDialog.__init__(self, parent=parent)
         self.setupUi(self)
         self.openBtn.clicked.connect(self.open_path)
+        self.saveAsBtn.clicked.connect(self.save_in_path)
         self.buttonBox.accepted.connect(lambda: self.quit(True))
         self.buttonBox.rejected.connect(lambda: self.quit(False))
         self.rootPathTxt.setText(root_path_prefill)
+        self.targetPathTxt.setText(root_path_prefill)
 
     def open_path(self):
-        pth = QFileDialog.getExistingDirectory(self,"Select root directory", "D:/Messungen/")
+        pth = QFileDialog.getExistingDirectory(self,"Select root directory", self.rootPathTxt.text())
         self.rootPathTxt.setText(pth)
+    
+    def save_in_path(self):
+        pth = QFileDialog.getExistingDirectory(self,"Select root directory", self.targetPathTxt.text())
+        self.targetPathTxt.setText(pth)
 
     @property
     def values(self):
-        return (self.rootPathTxt.text(), self.patternTxt.text())
+        return (self.rootPathTxt.text(), self.patternTxt.text(), self.targetPathTxt.text())
 
     def quit(self, accepted):
         if accepted:
@@ -192,20 +198,20 @@ class BounceAnalyzer(QMainWindow, Ui_Bounce):
         self.store_settings()
         dlg = PatternDialog(parent=self, root_path_prefill=root)
         if dlg.exec():
-            root, pattern = dlg.values
+            root, pattern, target = dlg.values
             glb = list(Path(root).rglob(pattern))
             # self.batch_process(glb)
             self.progressBar.setValue(0)
             self.progressBar.show()
             self.abortBatchBtn.show()
-            error_files = self.batch_process(glb)
+            error_files = self.batch_process(glb, root, target_parent=target)
             self.batch_done(error_files)
             # self.batch_thread = CallbackWorker(self.batch_process, glb, slotOnFinished=self.batch_done)
             # self.batch_thread.start()
 
     def batch_done(self, error = None):
         if error:
-            QMessageBox.information(self, "Done", "Batch processing done!\nDuring the processing of the following files, errors were encountered and the files skipped:\n" + "\n".join(error))
+            QMessageBox.information(self, "Done", "Batch processing done!\nDuring the processing, errors were encountered in the following files and therefore skipped:\n" + "\n".join(error))
         else:
             QMessageBox.information(self, "Done", "Batch processing done!")
         self.progressBar.hide()
@@ -223,16 +229,26 @@ class BounceAnalyzer(QMainWindow, Ui_Bounce):
     def update_progress(self, frac):
         self.progressBar.setValue(int(round(frac,2)*100))
         
-    def batch_process(self, files):
+    def batch_process(self, files: list[Path], root_path: str, target_parent: str = None) -> list[str]:
         total_count = len(files)
         cur_count = 0
         error_files = list()
+        use_new_target = False
+        if not target_parent is None:
+            target = Path(target_parent)
+            root = Path(root_path)
+            use_new_target = True
+
         for f in files:
             try:
                 if self.abort_batch_flag: return
+                # if target path supplied use it
+                relative_path = f.relative_to(root)
+                if use_new_target: self.data_control.target_path  = target / relative_path
                 self.auto_process(f)
             except Exception as e:
-                error_files.append(str(f))
+                # store all failed files for later display
+                error_files.append(str(relative_path) + ":\n" + str(e) + "\n")
                 # res = QMessageBox.question(self,"Error encountered!", f"While processing the program encountered an error. Continue?\n\nError:\n{e}")
                 # if res == QMessageBox.StandardButton.Yes:
                 #     continue
@@ -240,6 +256,7 @@ class BounceAnalyzer(QMainWindow, Ui_Bounce):
                 #     return
             finally:
                 cur_count += 1
+                self.data_control.target_path = None
                 self.update_progress_signal.emit(cur_count/total_count)
                 QApplication.processEvents()
         return error_files

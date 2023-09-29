@@ -23,7 +23,7 @@ class Ui_PatternDialog(object):
     def setupUi(self, PatternDialog):
         if not PatternDialog.objectName():
             PatternDialog.setObjectName(u"PatternDialog")
-        PatternDialog.resize(353, 168)
+        PatternDialog.resize(353, 208)
         self.verticalLayout = QVBoxLayout(PatternDialog)
         self.verticalLayout.setObjectName(u"verticalLayout")
         self.label = QLabel(PatternDialog)
@@ -59,9 +59,36 @@ class Ui_PatternDialog(object):
 
         self.label_3 = QLabel(PatternDialog)
         self.label_3.setObjectName(u"label_3")
+        sizePolicy = QSizePolicy(QSizePolicy.Preferred, QSizePolicy.Ignored)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.label_3.sizePolicy().hasHeightForWidth())
+        self.label_3.setSizePolicy(sizePolicy)
+        self.label_3.setMinimumSize(QSize(0, 25))
         self.label_3.setWordWrap(True)
 
         self.verticalLayout.addWidget(self.label_3)
+
+        self.label_4 = QLabel(PatternDialog)
+        self.label_4.setObjectName(u"label_4")
+
+        self.verticalLayout.addWidget(self.label_4)
+
+        self.horizontalLayout_2 = QHBoxLayout()
+        self.horizontalLayout_2.setObjectName(u"horizontalLayout_2")
+        self.targetPathTxt = QLineEdit(PatternDialog)
+        self.targetPathTxt.setObjectName(u"targetPathTxt")
+        self.targetPathTxt.setAlignment(Qt.AlignRight|Qt.AlignTrailing|Qt.AlignVCenter)
+
+        self.horizontalLayout_2.addWidget(self.targetPathTxt)
+
+        self.saveAsBtn = QPushButton(PatternDialog)
+        self.saveAsBtn.setObjectName(u"saveAsBtn")
+
+        self.horizontalLayout_2.addWidget(self.saveAsBtn)
+
+
+        self.verticalLayout.addLayout(self.horizontalLayout_2)
 
         self.buttonBox = QDialogButtonBox(PatternDialog)
         self.buttonBox.setObjectName(u"buttonBox")
@@ -82,5 +109,7 @@ class Ui_PatternDialog(object):
         self.label_2.setText(QCoreApplication.translate("PatternDialog", u"File match pattern", None))
         self.patternTxt.setText(QCoreApplication.translate("PatternDialog", u"*.cihx", None))
         self.label_3.setText(QCoreApplication.translate("PatternDialog", u"Process all files matching the pattern in the root directory and all subfolders recursively.", None))
+        self.label_4.setText(QCoreApplication.translate("PatternDialog", u"Target Path (Structure of Soure path will be copied)", None))
+        self.saveAsBtn.setText(QCoreApplication.translate("PatternDialog", u"Save In", None))
     # retranslateUi
 

@@ -32,6 +32,7 @@ from data_classes import BounceData, VideoInfoPresets
 USE_SPLINE_CONTOUR = False
 
 def bounce_eval(video: np.ndarray, info: VideoInfoPresets):
+    ''' evaluate movement of object '''
     logger.info("Start bounce analysis")
     frame_width,frame_height = info.shape
     total_frames = info.length
@@ -44,6 +45,7 @@ def bounce_eval(video: np.ndarray, info: VideoInfoPresets):
     # eval y streak image
     data_y, streak_y, max_y_idx = bounce_eval_y(video, info, frame_width, frame_height, total_frames, time_step, line_fit_window, spline_smoothing_mult, savgol_filter_window, pixel_scale, accel_thresh)
     # try find y coordinate where surface begins to use for x streak cutoff
+    # so that x position streak can be calculated by just taking the mn of each frame column, without the interference of the darker sample surface
     x_cutoff = int(np.ceil(max_y_idx + ((info.ball_size/2) / data_y.video_pixel_scale)))
     pixel_scale = data_y.video_pixel_scale
     # try detex x streak
@@ -52,7 +54,7 @@ def bounce_eval(video: np.ndarray, info: VideoInfoPresets):
 
 
 def bounce_eval_y(video: np.ndarray, info: VideoInfoPresets, frame_width, frame_height, total_frames, time_step, line_fit_window, spline_smoothing_mult, savgol_filter_window, pixel_scale, accel_thresh):
-    
+    ''' evaluate vertical movement and bounce of object '''
     # generate streak image
     streak = video.min(axis=2).T
 
@@ -168,6 +170,7 @@ def bounce_eval_y(video: np.ndarray, info: VideoInfoPresets, frame_width, frame_
 
 
 def bounce_eval_x(video: np.ndarray, info: VideoInfoPresets, data: BounceData, time_step, line_fit_window, pixel_scale, cutoff):
+    ''' evaluate the sideways movement of the falling/bouncing object '''
     CUTOFF = cutoff
     try:
         # generate streak image
@@ -175,6 +178,7 @@ def bounce_eval_x(video: np.ndarray, info: VideoInfoPresets, data: BounceData, t
 
         # find contours in streak image
         contour_x, contour_y, thresh_streak = _find_contour_x(streak, info)
+        # imit contour to extent of contour found by y-deflection
         left_cutoff_idx = min(data.contour_x)
         right_cutoff_idx = max(data.contour_x)
         contour_x = contour_x[left_cutoff_idx:right_cutoff_idx]
@@ -185,7 +189,6 @@ def bounce_eval_x(video: np.ndarray, info: VideoInfoPresets, data: BounceData, t
         position = contour_y * (pixel_scale / 1000)
 
         velocity = np.gradient(position, time)
-        
 
         # linefit on position before and after hit for velocity detection
         down_window_start = (data.impact_idx - line_fit_window)
@@ -203,6 +206,7 @@ def bounce_eval_x(video: np.ndarray, info: VideoInfoPresets, data: BounceData, t
         streak = None
 
     else:
+        # if x deflection detection dod not throw error, add results to data structure
         data.x_defl_contour_x, data.x_defl_contour_y = contour_x, contour_y
         data.x_defl_time = time
         data.x_defl_position = position
