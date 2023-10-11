@@ -63,6 +63,9 @@ class BounceData(JSONSerializable, JSONFileWizard):
     speed_in_intercept: float = 0.0
     speed_out_intercept: float = 0.0
     max_acceleration: float = 0.0
+    initial_cor: float = 0.0
+    initial_speed_out: float = 0.0
+    initial_speed_out_intercept: float = 0.0
 
     has_x_deflection_data: bool = False
     x_defl_contour_x: list[float] = field(default_factory=list)

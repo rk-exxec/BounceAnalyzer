@@ -53,9 +53,13 @@ class BouncePlot(pg.GraphicsLayoutWidget):
         self.position.addItem(self.positionVLineOut)
 
         self.positionSpeedInLine = pg.InfiniteLine(None, angle = 90, movable=False, **self.slope_vis)
-        self.positionSpeedOutLine = pg.InfiniteLine(None, angle = 90, movable=False, **self.slope_vis)
         self.position.addItem(self.positionSpeedInLine)
+
+        self.positionSpeedOutLine = pg.InfiniteLine(None, angle = 90, movable=False, **self.slope_vis)
         self.position.addItem(self.positionSpeedOutLine)
+
+        self.positionInitSpeedOutLine = pg.InfiniteLine(None, angle = 90, movable=False, **self.slope_vis)
+        self.position.addItem(self.positionInitSpeedOutLine)
 
         self.position.getViewBox().invertY()
         # self.position.getAxis('left').enableAutoSIPrefix(False)
@@ -72,6 +76,8 @@ class BouncePlot(pg.GraphicsLayoutWidget):
         self.velocity.addItem(self.speedInLine)
         self.speedOutLine = pg.InfiniteLine(None, angle = 0, movable=False, **self.slope_vis)
         self.velocity.addItem(self.speedOutLine)
+        self.speedInitOutLine = pg.InfiniteLine(None, angle = 0, movable=False, **self.slope_vis)
+        self.velocity.addItem(self.speedInitOutLine)
         self.velocity.getViewBox().invertY()
         self.velocity.getViewBox().setXLink(self.position.getViewBox())
 
@@ -110,12 +116,17 @@ class BouncePlot(pg.GraphicsLayoutWidget):
         self.accelHLine.setPos(data_plot.acceleration_thresh)
 
         self.positionSpeedInLine.setAngle(math.degrees(math.atan(data_plot.speed_in)))
-        self.positionSpeedOutLine.setAngle(math.degrees(math.atan(data_plot.speed_out)))
         self.positionSpeedInLine.setPos((0,data_plot.speed_in_intercept))
+
+        self.positionSpeedOutLine.setAngle(math.degrees(math.atan(data_plot.speed_out)))
         self.positionSpeedOutLine.setPos((0,data_plot.speed_out_intercept))
+
+        self.positionInitSpeedOutLine.setAngle(math.degrees(math.atan(data_plot.initial_speed_out)))
+        self.positionInitSpeedOutLine.setPos((0,data_plot.initial_speed_out_intercept))
 
         self.speedInLine.setPos(data_plot.speed_in)
         self.speedOutLine.setPos(data_plot.speed_out)
+        self.speedInitOutLine.setPos(data_plot.initial_speed_out)
 
         self.position.setXRange(data_plot.impact_time/2, data_plot.impact_time*1.5)
 
@@ -132,11 +143,16 @@ class BouncePlot(pg.GraphicsLayoutWidget):
         self.positionVLine.setPos(0)
         self.accelHLine.setPos(0)
         self.positionSpeedInLine.setAngle(0)
-        self.positionSpeedOutLine.setAngle(0)
         self.positionSpeedInLine.setPos(0)
+
+        self.positionSpeedOutLine.setAngle(0)
         self.positionSpeedOutLine.setPos(0)
+
+        self.positionInitSpeedOutLine.setAngle(0)
+        self.positionInitSpeedOutLine.setPos(0)
 
         self.speedInLine.setPos(0)
         self.speedOutLine.setPos(0)
+        self.speedInitOutLine.setPos(0)
 
 

@@ -153,6 +153,8 @@ class DataControl(QObject):
         self.ui.corLbl.setText(f"{data.cor:0.3f}")
         self.ui.speedInLbl.setText(f"{data.speed_in:0.3f} m/s")
         self.ui.speedOutLbl.setText(f"{data.speed_out:0.3f} m/s")
+        self.ui.initialCorLbl.setText(f"{data.initial_cor:0.3f}")
+        self.ui.initialSpeedOutLbl.setText(f"{data.initial_speed_out:0.3f} m/s")
 
         self.ui.maxDeformLbl.setText(f'{data.max_deformation*1000:0.3f} mm')
         self.ui.maxAccelLbl.setText(f'{data.max_acceleration:0.1f} m/s^2')
@@ -197,6 +199,8 @@ class DataControl(QObject):
             eval_data["COR"] = self.bounce_data.cor
             eval_data["speed_in"] = self.bounce_data.speed_in
             eval_data["speed_out"] = self.bounce_data.speed_out
+            eval_data["init_cor"] = self.bounce_data.initial_cor
+            eval_data["init_speed_out"] = self.bounce_data.initial_speed_out
             eval_data["max_acceleration"] = self.bounce_data.max_acceleration
             eval_data["video_framerate"] = self.bounce_data.video_framerate
             eval_data["video_resolution"] = self.bounce_data.video_resolution#f"{w}x{h}"

@@ -18,7 +18,7 @@
     <item>
      <widget class="TabControl" name="tabWidget">
       <property name="currentIndex">
-       <number>0</number>
+       <number>1</number>
       </property>
       <widget class="QWidget" name="videoTab">
        <attribute name="title">
@@ -461,6 +461,20 @@
                </property>
                <property name="alignment">
                 <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+               </property>
+              </widget>
+             </item>
+             <item row="0" column="4">
+              <widget class="QLabel" name="initialCorLbl">
+               <property name="text">
+                <string>0</string>
+               </property>
+              </widget>
+             </item>
+             <item row="3" column="4">
+              <widget class="QLabel" name="initialSpeedOutLbl">
+               <property name="text">
+                <string>0</string>
                </property>
               </widget>
              </item>

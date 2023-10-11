@@ -118,6 +118,8 @@ def bounce_eval_y(video: np.ndarray, info: VideoInfoPresets, frame_width, frame_
         data.acceleration_smooth = accel_smoothed
 
         max_acc_idx = np.abs(accel_smoothed).argmax()
+        min_acc_idx = accel_smoothed.argmin()
+        
         max_acceleration = accel[max_acc_idx]
 
         data.max_acceleration = max_acceleration
@@ -151,16 +153,29 @@ def bounce_eval_y(video: np.ndarray, info: VideoInfoPresets, frame_width, frame_
 
         up_window_end = release_pos + line_fit_window
         if up_window_end >= len(time): up_window_end = len(time) - 1
+        
+        # object coming back up not yet decelerated by surface adhesion
+        init_rebound_window = slice(max_acc_idx, release_pos - 5)
 
         pos_linefit_down = Polynomial(P.polyfit(time[down_window_start:touch_pos], position[down_window_start:touch_pos],deg=1))
         pos_linefit_up = Polynomial(P.polyfit(time[release_pos:up_window_end], position[release_pos:up_window_end],deg=1))
+        pos_linefit_init = Polynomial(P.polyfit(time[init_rebound_window], position[init_rebound_window],deg=1))
+        # calculated with sustained out velocity
         coef_of_restitution = abs(pos_linefit_up.coef[1] / pos_linefit_down.coef[1])
+        # init_cor = abs(pos_linefit_init.coef[1] / pos_linefit_down.coef[1])
+        # maximum velocity on rebound, might be decelerated due to adhesive forces
+        max_out_vel = velocity[max_acc_idx:].min()
+        init_cor = abs(max_out_vel / pos_linefit_down.coef[1])
+
 
         data.cor=coef_of_restitution
         data.speed_in=pos_linefit_down.coef[1] # m/s
         data.speed_out=pos_linefit_up.coef[1] # m/s
         data.speed_in_intercept=pos_linefit_down.coef[0]
         data.speed_out_intercept=pos_linefit_up.coef[0]
+        data.initial_cor = init_cor
+        data.initial_speed_out=max_out_vel # pos_linefit_init.coef[1] # m/s
+        data.initial_speed_out_intercept=pos_linefit_init.coef[0]
 
     except Exception as e:
         logger.error("Bounce analysis not finished due to:\n" + str(e))

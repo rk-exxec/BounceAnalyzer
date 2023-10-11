@@ -342,6 +342,16 @@ class Ui_Bounce(object):
 
         self.gridLayout.addWidget(self.label_9, 2, 2, 1, 1)
 
+        self.initialCorLbl = QLabel(self.groupBox)
+        self.initialCorLbl.setObjectName(u"initialCorLbl")
+
+        self.gridLayout.addWidget(self.initialCorLbl, 0, 4, 1, 1)
+
+        self.initialSpeedOutLbl = QLabel(self.groupBox)
+        self.initialSpeedOutLbl.setObjectName(u"initialSpeedOutLbl")
+
+        self.gridLayout.addWidget(self.initialSpeedOutLbl, 3, 4, 1, 1)
+
 
         self.verticalLayout_3.addWidget(self.groupBox)
 
@@ -438,7 +448,7 @@ class Ui_Bounce(object):
 
         self.retranslateUi(Bounce)
 
-        self.tabWidget.setCurrentIndex(0)
+        self.tabWidget.setCurrentIndex(1)
 
 
         QMetaObject.connectSlotsByName(Bounce)
@@ -480,6 +490,8 @@ class Ui_Bounce(object):
         self.maxDeformLbl.setText(QCoreApplication.translate("Bounce", u"0", None))
         self.label_2.setText(QCoreApplication.translate("Bounce", u"Max Deformation", None))
         self.label_9.setText(QCoreApplication.translate("Bounce", u"Speed In (Vi)", None))
+        self.initialCorLbl.setText(QCoreApplication.translate("Bounce", u"0", None))
+        self.initialSpeedOutLbl.setText(QCoreApplication.translate("Bounce", u"0", None))
         self.saveDataBtn_2.setText(QCoreApplication.translate("Bounce", u"Save Data", None))
         self.saveDataAsBtn.setText(QCoreApplication.translate("Bounce", u"Save Data As", None))
         self.deleteDataBtn.setText(QCoreApplication.translate("Bounce", u"Delete Data", None))
