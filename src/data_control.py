@@ -145,7 +145,7 @@ class DataControl(QObject):
         logger.debug("Plotting graphs")
         self.ui.positionGraph.plot_graphs(data)
 
-    def plot_image(self, streak_y, data, streak_x):
+    def plot_image(self, streak_y, data, streak_x=None):
         logger.debug("Plotting image")
         self.ui.streakImage.plot_image(streak_y, data, streak_x)
 
@@ -187,7 +187,9 @@ class DataControl(QObject):
         logger.info(f"Saving data as {filename}")
 
         if self.bounce_data is not None:
-            self.bounce_data.to_json_file(filename)
+            with open(filename,"w") as f:
+                f.write(self.bounce_data.to_json())
+            #self.bounce_data.to_json_file(filename)
 
             eval_data = pd.DataFrame()
             eval_data["acceleration_thresh"] = [self.bounce_data.acceleration_thresh]
@@ -235,14 +237,18 @@ class DataControl(QObject):
             file = Path(file.with_stem(file.stem[:-5]))
 
         if file.exists() and file.suffix == ".json":
-            data = BounceData.from_json_file(file)
+            # data = BounceData.from_json_file(file)
+            with open(file,"r") as f:
+                data = BounceData.from_json(f.read())
             self.plot_graphs(data)
             self.set_info(data)
 
         streak_path = file.with_stem(file.stem + "_streak").with_suffix(".png")
+        streak_x_path = file.with_stem(file.stem + "_streak_x").with_suffix(".png")
         if streak_path.exists():
             img = np.asarray(Image.open(streak_path))
-            self.plot_image(img, data)
+            streak_x = np.asarray(Image.open(streak_x_path)) if streak_x_path.exists() else None
+            self.plot_image(img, data, streak_x)
         
 
 

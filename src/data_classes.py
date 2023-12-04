@@ -15,9 +15,11 @@
 #     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 from dataclasses import dataclass, field
-from dataclass_wizard import JSONSerializable, JSONFileWizard
+from dataclasses_json import dataclass_json
+# from dataclass_wizard import JSONSerializable, JSONFileWizard
 import numpy as np
 
+@dataclass_json
 @dataclass
 class VideoInfoPresets:
     length: int
@@ -30,9 +32,9 @@ class VideoInfoPresets:
     ball_size: float
     rel_threshold: float
 
-# @dataclass_json
+@dataclass_json
 @dataclass
-class BounceData(JSONSerializable, JSONFileWizard):
+class BounceData:#(JSONSerializable, JSONFileWizard):
     video_framerate: float
     video_resolution: str
     video_num_frames: int

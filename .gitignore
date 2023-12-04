@@ -1,4 +1,4 @@
-﻿.venv
+﻿.*env*
 .pipenv
 .vscode/.ropeproject
 __pycache__

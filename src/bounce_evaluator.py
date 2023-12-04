@@ -53,7 +53,7 @@ def bounce_eval(video: np.ndarray, info: VideoInfoPresets):
     return data_x, streak_y, streak_x
 
 
-def bounce_eval_y(video: np.ndarray, info: VideoInfoPresets, frame_width, frame_height, total_frames, time_step, line_fit_window, spline_smoothing_mult, savgol_filter_window, pixel_scale, accel_thresh):
+def bounce_eval_y(video: np.ndarray, info: VideoInfoPresets, frame_width, frame_height, total_frames, time_step: float, line_fit_window, spline_smoothing_mult, savgol_filter_window, pixel_scale, accel_thresh):
     ''' evaluate vertical movement and bounce of object '''
     # generate streak image
     streak = video.min(axis=2).T
@@ -75,10 +75,10 @@ def bounce_eval_y(video: np.ndarray, info: VideoInfoPresets, frame_width, frame_
     position = contour_y * (pixel_scale / 1000)
 
     data = BounceData(
-        contour_x=contour_x,
-        contour_y=contour_y,
-        time=time,
-        position=position,
+        contour_x=contour_x.tolist(),
+        contour_y=contour_y.tolist(),
+        time=time.tolist(),
+        position=position.tolist(),
         video_framerate=info.frame_rate,
         video_resolution= f"{frame_width}x{frame_height}",
         video_num_frames=total_frames,
@@ -104,32 +104,32 @@ def bounce_eval_y(video: np.ndarray, info: VideoInfoPresets, frame_width, frame_
             savgol_filter_window = min(savgol_filter_window, len(position))
             position_smoothed = savgol_filter(position, savgol_filter_window, 5, mode="interp")
 
-            velocity = np.gradient(position, time)
-            velocity_smoothed = np.gradient(position_smoothed, time)
+            velocity: np.ndarray = np.gradient(position, time)
+            velocity_smoothed: np.ndarray = np.gradient(position_smoothed, time)
 
             accel = np.gradient(velocity_smoothed, time)
             # accel_s = np.gradient(velocity_fs, time)
             accel_smoothed = savgol_filter(accel, savgol_filter_window, 5, mode="interp")
 
-        data.position_smooth = position_smoothed
-        data.velocity = velocity
-        data.velocity_smooth = velocity_smoothed
-        data.acceleration = accel
-        data.acceleration_smooth = accel_smoothed
+        data.position_smooth = position_smoothed.tolist()
+        data.velocity = velocity.tolist()
+        data.velocity_smooth = velocity_smoothed.tolist()
+        data.acceleration = accel.tolist()
+        data.acceleration_smooth = accel_smoothed.tolist()
 
         max_acc_idx = np.abs(accel_smoothed).argmax()
         min_acc_idx = accel_smoothed.argmin()
         
         max_acceleration = accel[max_acc_idx]
 
-        data.max_acceleration = max_acceleration
+        data.max_acceleration = float(max_acceleration)
 
         # image index and time where acceleration crosses threshold (just before max accel)
         touch_pos = max_acc_idx - (np.argwhere(np.flip(accel_smoothed[:max_acc_idx])>=accel_thresh)[0]).item()
         touch_time = touch_pos*time_step + time[0]
 
-        data.impact_idx = touch_pos
-        data.impact_time = touch_time
+        data.impact_idx = int(touch_pos)
+        data.impact_time = float(touch_time)
         # release is, where object reaches same position as at touch time
         try:
             release_pos = max_acc_idx + (np.argwhere(position[max_acc_idx:]<=position[touch_pos])[0]).item()
@@ -138,14 +138,14 @@ def bounce_eval_y(video: np.ndarray, info: VideoInfoPresets, frame_width, frame_
             release_pos = (max_acc_idx - touch_pos) + max_acc_idx
         release_time = release_pos*time_step + time[0]
 
-        data.release_idx = release_pos
-        data.release_time = release_time
+        data.release_idx = int(release_pos)
+        data.release_time = float(release_time)
         
         max_dist = position.argmax()
         max_deformation = np.abs(position[touch_pos] - position.max()).squeeze()
 
-        data.max_distance = max_dist
-        data.max_deformation=max_deformation
+        data.max_distance = float(max_dist)
+        data.max_deformation = float(max_deformation)
 
         # linefit on position before and after hit for velocity detection
         down_window_start = (touch_pos - line_fit_window)
@@ -168,14 +168,14 @@ def bounce_eval_y(video: np.ndarray, info: VideoInfoPresets, frame_width, frame_
         init_cor = abs(max_out_vel / pos_linefit_down.coef[1])
 
 
-        data.cor=coef_of_restitution
-        data.speed_in=pos_linefit_down.coef[1] # m/s
-        data.speed_out=pos_linefit_up.coef[1] # m/s
-        data.speed_in_intercept=pos_linefit_down.coef[0]
-        data.speed_out_intercept=pos_linefit_up.coef[0]
-        data.initial_cor = init_cor
-        data.initial_speed_out=max_out_vel # pos_linefit_init.coef[1] # m/s
-        data.initial_speed_out_intercept=pos_linefit_init.coef[0]
+        data.cor= float(coef_of_restitution)
+        data.speed_in= float(pos_linefit_down.coef[1]) # m/s
+        data.speed_out= float(pos_linefit_up.coef[1]) # m/s
+        data.speed_in_intercept= float(pos_linefit_down.coef[0])
+        data.speed_out_intercept= float(pos_linefit_up.coef[0])
+        data.initial_cor =  float(init_cor)
+        data.initial_speed_out= float(max_out_vel) # pos_linefit_init.coef[1] # m/s
+        data.initial_speed_out_intercept= float(pos_linefit_init.coef[0])
 
     except Exception as e:
         logger.error("Bounce analysis not finished due to:\n" + str(e))
@@ -222,12 +222,12 @@ def bounce_eval_x(video: np.ndarray, info: VideoInfoPresets, data: BounceData, t
 
     else:
         # if x deflection detection dod not throw error, add results to data structure
-        data.x_defl_contour_x, data.x_defl_contour_y = contour_x, contour_y
-        data.x_defl_time = time
-        data.x_defl_position = position
-        data.x_defl_velocity = velocity
-        data.x_defl_speed_in=pos_linefit_down.coef[1] # m/s
-        data.x_defl_speed_out=pos_linefit_up.coef[1] # m/s
+        data.x_defl_contour_x, data.x_defl_contour_y = contour_x.tolist(), contour_y.tolist()
+        data.x_defl_time = time.tolist()
+        data.x_defl_position = position.tolist()
+        data.x_defl_velocity = velocity.tolist()
+        data.x_defl_speed_in = float(pos_linefit_down.coef[1]) # m/s
+        data.x_defl_speed_out = float(pos_linefit_up.coef[1]) # m/s
         data.has_x_deflection_data = True
     
         logger.info("X deflection analyzed")
@@ -261,7 +261,7 @@ def _central_diff(y,x):
 
     return res
 
-def _find_contour_y(img: np.ndarray, info:VideoInfoPresets) -> np.ndarray:
+def _find_contour_y(img: np.ndarray, info:VideoInfoPresets) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """
     this determines the top contour of the streak image by fractional indexing (similar to LabView Threshold 1D)
     uses user defined relative threshold (to max value) for edge detection
@@ -291,7 +291,7 @@ def _find_contour_y(img: np.ndarray, info:VideoInfoPresets) -> np.ndarray:
 
 _find_contour_x = _find_contour_y
 
-def _clean_contour(contour, num_frames):
+def _clean_contour(contour, num_frames) -> tuple[np.ndarray,np.ndarray]:
     # remove contour parts that touch the image border
     del_pos = np.argwhere(contour[1]==0)
     #find gaps, gaps represent where contour is not touching upper image border
@@ -329,7 +329,7 @@ def _clean_contour(contour, num_frames):
     contour_clean = contour.T[idx].T
     return contour_clean
 
-def _get_scale(streak, y_values, first_x, info: VideoInfoPresets):
+def _get_scale(streak, y_values, first_x, info: VideoInfoPresets) -> float:
     """ calculate pixel scale from known width of object"""
     def get_obj_px_height(idx):
         # calculate height of streak
