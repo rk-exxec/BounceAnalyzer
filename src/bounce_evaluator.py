@@ -133,13 +133,15 @@ def bounce_eval_y(video: np.ndarray, info: VideoInfoPresets, frame_width, frame_
         # release is, where object reaches same position as at touch time
         try:
             release_pos = max_acc_idx + (np.argwhere(position[max_acc_idx:]<=position[touch_pos])[0]).item()
+            ball_release = True
         except IndexError:
-            # ball was not released, set release pos to be symmetrical to touch pos
+            # ball was not released, set release pos to be symmetrical to touch pos for later processing steps
             release_pos = (max_acc_idx - touch_pos) + max_acc_idx
+            ball_release= False
         release_time = release_pos*time_step + time[0]
 
-        data.release_idx = int(release_pos)
-        data.release_time = float(release_time)
+        data.release_idx = int(release_pos) if ball_release else None
+        data.release_time = float(release_time) if ball_release else None
         
         max_dist = position.argmax()
         max_deformation = np.abs(position[touch_pos] - position.max()).squeeze()
