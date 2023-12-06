@@ -131,14 +131,15 @@ class Ui_Bounce(object):
 
         self.horizontalLayout_3.addWidget(self.label_8)
 
-        self.accelThreshSpin = QDoubleSpinBox(self.videoTab)
-        self.accelThreshSpin.setObjectName(u"accelThreshSpin")
-        self.accelThreshSpin.setButtonSymbols(QAbstractSpinBox.NoButtons)
-        self.accelThreshSpin.setDecimals(1)
-        self.accelThreshSpin.setMaximum(100000.000000000000000)
-        self.accelThreshSpin.setValue(1500.000000000000000)
+        self.threshSpin = QDoubleSpinBox(self.videoTab)
+        self.threshSpin.setObjectName(u"threshSpin")
+        self.threshSpin.setReadOnly(False)
+        self.threshSpin.setButtonSymbols(QAbstractSpinBox.NoButtons)
+        self.threshSpin.setDecimals(1)
+        self.threshSpin.setMaximum(100.000000000000000)
+        self.threshSpin.setValue(0.900000000000000)
 
-        self.horizontalLayout_3.addWidget(self.accelThreshSpin)
+        self.horizontalLayout_3.addWidget(self.threshSpin)
 
         self.line = QFrame(self.videoTab)
         self.line.setObjectName(u"line")
@@ -448,7 +449,7 @@ class Ui_Bounce(object):
 
         self.retranslateUi(Bounce)
 
-        self.tabWidget.setCurrentIndex(1)
+        self.tabWidget.setCurrentIndex(0)
 
 
         QMetaObject.connectSlotsByName(Bounce)
@@ -465,7 +466,7 @@ class Ui_Bounce(object):
         self.playBtn.setText(QCoreApplication.translate("Bounce", u"\u25ba", None))
         self.pauseBtn.setText(QCoreApplication.translate("Bounce", u"||", None))
         self.resetFrame.setText(QCoreApplication.translate("Bounce", u"Reset", None))
-        self.label_8.setText(QCoreApplication.translate("Bounce", u"Acceleration Threshold:", None))
+        self.label_8.setText(QCoreApplication.translate("Bounce", u"Rel Velocity Thresh", None))
         self.label_3.setText(QCoreApplication.translate("Bounce", u" Pixel Scale:", None))
         self.pxScaleSpin.setSpecialValueText(QCoreApplication.translate("Bounce", u"Auto", None))
         self.pxScaleSpin.setSuffix(QCoreApplication.translate("Bounce", u" mm", None))

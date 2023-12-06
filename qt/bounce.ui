@@ -18,7 +18,7 @@
     <item>
      <widget class="TabControl" name="tabWidget">
       <property name="currentIndex">
-       <number>1</number>
+       <number>0</number>
       </property>
       <widget class="QWidget" name="videoTab">
        <attribute name="title">
@@ -136,12 +136,15 @@
             <item>
              <widget class="QLabel" name="label_8">
               <property name="text">
-               <string>Acceleration Threshold:</string>
+               <string>Rel Velocity Thresh</string>
               </property>
              </widget>
             </item>
             <item>
-             <widget class="QDoubleSpinBox" name="accelThreshSpin">
+             <widget class="QDoubleSpinBox" name="threshSpin">
+              <property name="readOnly">
+               <bool>false</bool>
+              </property>
               <property name="buttonSymbols">
                <enum>QAbstractSpinBox::NoButtons</enum>
               </property>
@@ -149,10 +152,10 @@
                <number>1</number>
               </property>
               <property name="maximum">
-               <double>100000.000000000000000</double>
+               <double>100.000000000000000</double>
               </property>
               <property name="value">
-               <double>1500.000000000000000</double>
+               <double>0.900000000000000</double>
               </property>
              </widget>
             </item>

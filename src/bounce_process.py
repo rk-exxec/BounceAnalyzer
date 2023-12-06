@@ -113,12 +113,12 @@ class BounceAnalyzer(QMainWindow, Ui_Bounce):
     def load_settings(self):
         self.ballSizeSpin.setValue(float(self.settings.value("params/ballSize", 2.381)))
         self.relThreshSpin.setValue(float(self.settings.value("params/relThresh", 0.7)))
-        self.accelThreshSpin.setValue(float(self.settings.value("params/accelThresh", 1800)))
+        self.threshSpin.setValue(float(self.settings.value("params/thresh", 0.9)))
 
     def store_settings(self):
         self.settings.setValue("params/ballSize", self.ballSizeSpin.value())
         self.settings.setValue("params/relThresh", self.relThreshSpin.value())
-        self.settings.setValue("params/accelThresh", self.accelThreshSpin.value())
+        self.settings.setValue("params/thresh", self.threshSpin.value())
 
     def register_action_events(self):
         self.playBtn.clicked.connect(self.videoController.play)

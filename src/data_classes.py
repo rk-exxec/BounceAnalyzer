@@ -27,7 +27,7 @@ class VideoInfoPresets:
     pixel_scale: float
     frame_rate: float
     bit_depth: int
-    accel_thresh: float
+    rel_vel_thresh: float
     filename: str
     ball_size: float
     rel_threshold: float
@@ -40,6 +40,8 @@ class BounceData:#(JSONSerializable, JSONFileWizard):
     video_num_frames: int
     video_pixel_scale: float #mm/px
     video_name: str = field(compare=False)
+    savgol_filter_window: int
+    savgol_polyorder: int
 
     contour_x: list[int]
     contour_y: list[float]
@@ -51,7 +53,7 @@ class BounceData:#(JSONSerializable, JSONFileWizard):
     velocity_smooth: list[float] = field(default_factory=list)
     acceleration_smooth: list[float] = field(default_factory=list)
 
-    acceleration_thresh: float = 1800.0
+    rel_velocity_thresh: float = 0.9
     impact_idx: int = 0.0
     impact_time: float = 0.0
     release_idx: int = 0.0

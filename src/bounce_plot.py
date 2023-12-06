@@ -113,7 +113,7 @@ class BouncePlot(pg.GraphicsLayoutWidget):
         self.velocityVLine.setPos(data_plot.impact_time)
         self.positionVLine.setPos(data_plot.impact_time)
         self.positionVLineOut.setPos(data_plot.release_time)
-        self.accelHLine.setPos(data_plot.acceleration_thresh)
+        # self.accelHLine.setPos(data_plot.acceleration_thresh)
 
         self.positionSpeedInLine.setAngle(math.degrees(math.atan(data_plot.speed_in)))
         self.positionSpeedInLine.setPos((0,data_plot.speed_in_intercept))

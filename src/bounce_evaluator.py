@@ -29,8 +29,6 @@ from numpy.polynomial import polynomial as P
 
 from data_classes import BounceData, VideoInfoPresets
 
-USE_SPLINE_CONTOUR = False
-
 def bounce_eval(video: np.ndarray, info: VideoInfoPresets):
     ''' evaluate movement of object '''
     logger.info("Start bounce analysis")
@@ -39,11 +37,12 @@ def bounce_eval(video: np.ndarray, info: VideoInfoPresets):
     time_step =  1/info.frame_rate
     line_fit_window = int(round(0.0025 / time_step)) # number of points before / after acceleration trigger used for line fitting
     spline_smoothing_mult = np.e**(info.frame_rate/30000 -1) # magic number
-    savgol_filter_window = int(info.frame_rate * 0.0007) # approx 21 at 30000 fps seems to work
+    savgol_filter_window = 21 #int(info.frame_rate * 0.0007) # approx 21 at 30000 fps seems to work
+    savgol_polyorder = 2
     pixel_scale = (0.0000197) #self._video_reader.reader.pixel_scale
-    accel_thresh = -abs(info.accel_thresh)
+    rel_vel_thresh = info.rel_vel_thresh
     # eval y streak image
-    data_y, streak_y, max_y_idx = bounce_eval_y(video, info, frame_width, frame_height, total_frames, time_step, line_fit_window, spline_smoothing_mult, savgol_filter_window, pixel_scale, accel_thresh)
+    data_y, streak_y, max_y_idx = bounce_eval_y(video, info, frame_width, frame_height, total_frames, time_step, line_fit_window, savgol_polyorder, savgol_filter_window, pixel_scale, relative_vel_thresh=rel_vel_thresh)
     # try find y coordinate where surface begins to use for x streak cutoff
     # so that x position streak can be calculated by just taking the mn of each frame column, without the interference of the darker sample surface
     x_cutoff = int(np.ceil(max_y_idx + ((info.ball_size/2) / data_y.video_pixel_scale)))
@@ -53,7 +52,7 @@ def bounce_eval(video: np.ndarray, info: VideoInfoPresets):
     return data_x, streak_y, streak_x
 
 
-def bounce_eval_y(video: np.ndarray, info: VideoInfoPresets, frame_width, frame_height, total_frames, time_step: float, line_fit_window, spline_smoothing_mult, savgol_filter_window, pixel_scale, accel_thresh):
+def bounce_eval_y(video: np.ndarray, info: VideoInfoPresets, frame_width, frame_height, total_frames, time_step: float, line_fit_window, savgol_polyorder, savgol_filter_window, pixel_scale, relative_vel_thresh=0.9):
     ''' evaluate vertical movement and bounce of object '''
     # generate streak image
     streak = video.min(axis=2).T
@@ -84,32 +83,22 @@ def bounce_eval_y(video: np.ndarray, info: VideoInfoPresets, frame_width, frame_
         video_num_frames=total_frames,
         video_pixel_scale=pixel_scale,
         video_name=info.filename,
-        acceleration_thresh=accel_thresh
+        savgol_filter_window=savgol_filter_window,
+        savgol_polyorder=savgol_polyorder,
+        rel_velocity_thresh=relative_vel_thresh
     )
 
     try:
-        if USE_SPLINE_CONTOUR:
-            m = len(contour_x)
-            spl = splrep(contour_x, contour_y, s=np.sqrt(2*m)*spline_smoothing_mult)
-            y_new = splev(contour_x, spl, der=0)
-            data.contour_y = y_new
-            position_smoothed = y_new * pixel_scale
+        # position and derivatives
+        savgol_filter_window = min(savgol_filter_window, len(position))
+        position_smoothed = savgol_filter(position, savgol_filter_window, savgol_polyorder, mode="interp")
 
-            velocity = np.gradient(savgol_filter(position, savgol_filter_window, 5, mode="interp"), time)
-            velocity_smoothed = np.gradient(position_smoothed, time)
+        velocity: np.ndarray = np.gradient(position, time)
+        velocity_smoothed: np.ndarray = np.gradient(position_smoothed, time)
 
-            accel = savgol_filter(np.gradient(velocity, time), savgol_filter_window, 5, mode="interp")
-            accel_smoothed = np.gradient(velocity_smoothed, time)
-        else:
-            savgol_filter_window = min(savgol_filter_window, len(position))
-            position_smoothed = savgol_filter(position, savgol_filter_window, 5, mode="interp")
-
-            velocity: np.ndarray = np.gradient(position, time)
-            velocity_smoothed: np.ndarray = np.gradient(position_smoothed, time)
-
-            accel = np.gradient(velocity_smoothed, time)
-            # accel_s = np.gradient(velocity_fs, time)
-            accel_smoothed = savgol_filter(accel, savgol_filter_window, 5, mode="interp")
+        accel = np.gradient(velocity_smoothed, time)
+        # accel_s = np.gradient(velocity_fs, time)
+        accel_smoothed = savgol_filter(accel, savgol_filter_window, savgol_polyorder, mode="interp")
 
         data.position_smooth = position_smoothed.tolist()
         data.velocity = velocity.tolist()
@@ -117,15 +106,27 @@ def bounce_eval_y(video: np.ndarray, info: VideoInfoPresets, frame_width, frame_
         data.acceleration = accel.tolist()
         data.acceleration_smooth = accel_smoothed.tolist()
 
+        # key points
+        max_pos_idx = position.argmax()
         max_acc_idx = np.abs(accel_smoothed).argmax()
         min_acc_idx = accel_smoothed.argmin()
-        
         max_acceleration = accel[max_acc_idx]
-
         data.max_acceleration = float(max_acceleration)
 
-        # image index and time where acceleration crosses threshold (just before max accel)
-        touch_pos = max_acc_idx - (np.argwhere(np.flip(accel_smoothed[:max_acc_idx])>=accel_thresh)[0]).item()
+
+        # find touch point by 10% veolicty change
+        #estimate first touch point by subtracting material thickness from max pos
+        estimate_touch_idx = np.argwhere(position >=(position[max_pos_idx] - 0.0012))[0].item()
+
+        # average speed in fit
+        down_window_start = (estimate_touch_idx - line_fit_window)
+        if down_window_start < 0 : down_window_start = 0
+        pos_linefit_down = Polynomial(P.polyfit(time[down_window_start:estimate_touch_idx], position[down_window_start:estimate_touch_idx],deg=1))
+        speed_in = float(pos_linefit_down.coef[1])
+
+        # when speed in drop to 90% consider touch pos
+        touch_pos = max_pos_idx - np.argwhere(np.flip(velocity[:max_pos_idx]) >= relative_vel_thresh*speed_in)[0].item()
+
         touch_time = touch_pos*time_step + time[0]
 
         data.impact_idx = int(touch_pos)
@@ -143,15 +144,14 @@ def bounce_eval_y(video: np.ndarray, info: VideoInfoPresets, frame_width, frame_
         data.release_idx = int(release_pos) if ball_release else None
         data.release_time = float(release_time) if ball_release else None
         
-        max_dist = position.argmax()
+
         max_deformation = np.abs(position[touch_pos] - position.max()).squeeze()
 
-        data.max_distance = float(max_dist)
+        data.max_distance = float(max_pos_idx)
         data.max_deformation = float(max_deformation)
 
         # linefit on position before and after hit for velocity detection
-        down_window_start = (touch_pos - line_fit_window)
-        if down_window_start < 0 : down_window_start = 0
+
 
         up_window_end = release_pos + line_fit_window
         if up_window_end >= len(time): up_window_end = len(time) - 1
@@ -159,7 +159,7 @@ def bounce_eval_y(video: np.ndarray, info: VideoInfoPresets, frame_width, frame_
         # object coming back up not yet decelerated by surface adhesion
         init_rebound_window = slice(max_acc_idx, release_pos - 5)
 
-        pos_linefit_down = Polynomial(P.polyfit(time[down_window_start:touch_pos], position[down_window_start:touch_pos],deg=1))
+        
         pos_linefit_up = Polynomial(P.polyfit(time[release_pos:up_window_end], position[release_pos:up_window_end],deg=1))
         pos_linefit_init = Polynomial(P.polyfit(time[init_rebound_window], position[init_rebound_window],deg=1))
         # calculated with sustained out velocity

@@ -59,7 +59,7 @@ class DataControl(QObject):
         self.video_path: Path = None
         self.ball_size = 2.5
         self.pixel_scale = None
-        self.accel_thresh = 1500.0
+        self.rel_vel_thresh = 0.9
         self.bit_depth = 8
         self.save_on_data_event = False
         self.rel_threshold = 0.5
@@ -80,14 +80,14 @@ class DataControl(QObject):
         self.ui.saveDataAsBtn.clicked.connect(self.save_dialog)
         self.ui.saveDataAsBtn_2.clicked.connect(self.save_dialog)
         self.ui.deleteDataBtn.clicked.connect(self.delete_data)
-        self.ui.accelThreshSpin.valueChanged.connect(self.set_accel_thresh)
+        self.ui.threshSpin.valueChanged.connect(self.set_rel_vel_thresh)
         self.ui.relThreshSpin.valueChanged.connect(self.set_rel_thresh)
         self.update_data_signal.connect(self.update_data)
         self.video_controller.loaded_video_signal.connect(self.update_video_info)
 
 
-    def set_accel_thresh(self, value):
-        self.accel_thresh = value
+    def set_rel_vel_thresh(self, value):
+        self.rel_vel_thresh = value
 
     def set_rel_thresh(self, value):
         self.rel_threshold = value
@@ -192,7 +192,7 @@ class DataControl(QObject):
             #self.bounce_data.to_json_file(filename)
 
             eval_data = pd.DataFrame()
-            eval_data["acceleration_thresh"] = [self.bounce_data.acceleration_thresh]
+            eval_data["rel_vel_thresh"] = [self.bounce_data.rel_velocity_thresh]
             eval_data["impact_idx"] = self.bounce_data.impact_idx
             eval_data["impact_time"] = self.bounce_data.impact_time    
             eval_data["release_idx"] = self.bounce_data.release_idx
@@ -209,6 +209,8 @@ class DataControl(QObject):
             eval_data["video_num_frames"] = self.bounce_data.video_num_frames
             eval_data["video_pixel_scale"] = self.bounce_data.video_pixel_scale
             eval_data["video_name"] = self.bounce_data.video_name
+            eval_data["savgol_filter_window"] = self.bounce_data.savgol_filter_window
+            eval_data["savgol_polyorder"] = self.bounce_data.savgol_polyorder
             eval_data["img_rel_threshold"] = self.rel_threshold
             eval_data["x_defl_detected"] = self.bounce_data.has_x_deflection_data
             eval_data["x_defl_speed_in"] = self.bounce_data.x_defl_speed_in
@@ -263,7 +265,7 @@ class DataControl(QObject):
             shape = self.video_controller.reader.frame_shape,
             pixel_scale = self.pixel_scale,
             frame_rate = self.video_controller.reader.frame_rate,
-            accel_thresh = self.accel_thresh,
+            rel_vel_thresh = self.rel_vel_thresh,
             bit_depth=self.bit_depth,
             filename=str(self.video_path),
             ball_size=self.ball_size,
