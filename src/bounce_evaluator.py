@@ -164,9 +164,9 @@ def bounce_eval_y(video: np.ndarray, info: VideoInfoPresets, frame_width, frame_
         pos_linefit_init = Polynomial(P.polyfit(time[init_rebound_window], position[init_rebound_window],deg=1))
         # calculated with sustained out velocity
         coef_of_restitution = abs(pos_linefit_up.coef[1] / pos_linefit_down.coef[1])
-        # init_cor = abs(pos_linefit_init.coef[1] / pos_linefit_down.coef[1])
         # maximum velocity on rebound, might be decelerated due to adhesive forces
-        max_out_vel = velocity[max_acc_idx:].min()
+        max_out_vel_idx = velocity[max_acc_idx:].argmin() + max_acc_idx
+        max_out_vel = velocity[max_out_vel_idx]
         init_cor = abs(max_out_vel / pos_linefit_down.coef[1])
 
 
@@ -177,7 +177,7 @@ def bounce_eval_y(video: np.ndarray, info: VideoInfoPresets, frame_width, frame_
         data.speed_out_intercept= float(pos_linefit_up.coef[0])
         data.initial_cor =  float(init_cor)
         data.initial_speed_out= float(max_out_vel) # pos_linefit_init.coef[1] # m/s
-        data.initial_speed_out_intercept= float(pos_linefit_init.coef[0])
+        data.initial_speed_out_intercept= float(position[max_out_vel_idx] - max_out_vel*time[max_out_vel_idx]) #float(pos_linefit_init.coef[0]) # float(position[velocity[max_acc_idx:].argmin()+max_acc_idx]) #
 
     except Exception as e:
         logger.error("Bounce analysis not finished due to:\n" + str(e))
