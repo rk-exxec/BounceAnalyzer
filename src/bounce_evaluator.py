@@ -36,7 +36,6 @@ def bounce_eval(video: np.ndarray, info: VideoInfoPresets):
     total_frames = info.length
     time_step =  1/info.frame_rate
     line_fit_window = int(round(0.0025 / time_step)) # number of points before / after acceleration trigger used for line fitting
-    spline_smoothing_mult = np.e**(info.frame_rate/30000 -1) # magic number
     savgol_filter_window = 21 #int(info.frame_rate * 0.0007) # approx 21 at 30000 fps seems to work
     savgol_polyorder = 2
     pixel_scale = (0.0000197) #self._video_reader.reader.pixel_scale
@@ -97,7 +96,6 @@ def bounce_eval_y(video: np.ndarray, info: VideoInfoPresets, frame_width, frame_
         velocity_smoothed: np.ndarray = np.gradient(position_smoothed, time)
 
         accel = np.gradient(velocity_smoothed, time)
-        # accel_s = np.gradient(velocity_fs, time)
         accel_smoothed = savgol_filter(accel, savgol_filter_window, savgol_polyorder, mode="interp")
 
         data.position_smooth = position_smoothed.tolist()
@@ -147,7 +145,7 @@ def bounce_eval_y(video: np.ndarray, info: VideoInfoPresets, frame_width, frame_
 
         max_deformation = np.abs(position[touch_pos] - position.max()).squeeze()
 
-        data.max_distance = float(max_pos_idx)
+        data.max_distance_idx = int(max_pos_idx)
         data.max_deformation = float(max_deformation)
 
         # linefit on position before and after hit for velocity detection
@@ -211,11 +209,16 @@ def bounce_eval_x(video: np.ndarray, info: VideoInfoPresets, data: BounceData, t
         down_window_start = (data.impact_idx - line_fit_window)
         if down_window_start < 0 : down_window_start = 0
 
-        up_window_end = data.release_idx + line_fit_window
+        if data.release_idx is None: 
+            release_idx = abs(data.impact_idx - data.max_distance_idx) + data.max_distance_idx
+        else:
+            release_idx = data.release_idx
+
+        up_window_end = release_idx + line_fit_window
         if up_window_end >= len(time): up_window_end = len(time) - 1
 
         pos_linefit_down = Polynomial(P.polyfit(time[down_window_start:data.impact_idx], position[down_window_start:data.impact_idx],deg=1))
-        pos_linefit_up = Polynomial(P.polyfit(time[data.release_idx:up_window_end], position[data.release_idx:up_window_end],deg=1))
+        pos_linefit_up = Polynomial(P.polyfit(time[release_idx:up_window_end], position[release_idx:up_window_end],deg=1))
 
 
     except Exception as e:

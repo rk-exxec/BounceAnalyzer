@@ -59,7 +59,7 @@ class BounceData:#(JSONSerializable, JSONFileWizard):
     release_idx: int = 0.0
     release_time: float = 0.0
 
-    max_distance: float = 0.0
+    max_distance_idx: int = 0
     max_deformation: float = 0.0
     cor: float = 0.0
     speed_in: float = 0.0
