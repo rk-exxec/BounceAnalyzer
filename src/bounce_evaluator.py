@@ -110,6 +110,7 @@ def bounce_eval_y(video: np.ndarray, info: VideoInfoPresets, frame_width, frame_
         min_acc_idx = accel_smoothed.argmin()
         max_acceleration = accel[max_acc_idx]
         data.max_acceleration = float(max_acceleration)
+        max_out_vel_idx = velocity[max_acc_idx:].argmin() + max_acc_idx
 
 
         # find touch point by 10% veolicty change
@@ -135,7 +136,7 @@ def bounce_eval_y(video: np.ndarray, info: VideoInfoPresets, frame_width, frame_
             ball_release = True
         except IndexError:
             # ball was not released, set release pos to be symmetrical to touch pos for later processing steps
-            release_pos = (max_acc_idx - touch_pos) + max_acc_idx
+            release_pos = (max_out_vel_idx - touch_pos) + max_out_vel_idx
             ball_release= False
         release_time = release_pos*time_step + time[0]
 
@@ -163,7 +164,6 @@ def bounce_eval_y(video: np.ndarray, info: VideoInfoPresets, frame_width, frame_
         # calculated with sustained out velocity
         coef_of_restitution = abs(pos_linefit_up.coef[1] / pos_linefit_down.coef[1])
         # maximum velocity on rebound, might be decelerated due to adhesive forces
-        max_out_vel_idx = velocity[max_acc_idx:].argmin() + max_acc_idx
         max_out_vel = velocity[max_out_vel_idx]
         init_cor = abs(max_out_vel / pos_linefit_down.coef[1])
 
