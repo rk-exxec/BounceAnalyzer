@@ -129,7 +129,7 @@ class BounceAnalyzer(QMainWindow, Ui_Bounce):
         self.startEvalBtn.clicked.connect(self.bounce_eval)
         self.actionOpen.triggered.connect(self.videoController.open_file)
         self.actionBatch_Process.triggered.connect(lambda x: self.start_batch_process())
-        self.file_drop_event.connect(self.file_dropped)
+        self.file_drop_event.connect(self.file_dropped, Qt.ConnectionType.QueuedConnection)
         self.abortBatchBtn.clicked.connect(self.batch_abort)
 
         self.data_control.data_update_done_signal.connect(self.set_done)
@@ -152,14 +152,14 @@ class BounceAnalyzer(QMainWindow, Ui_Bounce):
             event.ignore()
 
     def dragMoveEvent(self, event):
-        if event.mimeData().hasUrls:
+        if event.mimeData().hasUrls():
             event.setDropAction(Qt.CopyAction)
             event.accept()
         else:
             event.ignore()
 
     def dropEvent(self, event: QtGui.QDropEvent) -> None:
-        if event.mimeData().hasUrls:
+        if event.mimeData().hasUrls():
             event.setDropAction(Qt.CopyAction)
             event.accept()
             links = []
@@ -189,10 +189,11 @@ class BounceAnalyzer(QMainWindow, Ui_Bounce):
                     self.tabWidget.setCurrentIndex(0)
             elif file.is_dir():
                 self.start_batch_process(str(file))
+            else:
+                QMessageBox.critical(self, "Invalid Path", "Dropped file path is invalid!")
         elif len(files) > 1:
             QMessageBox.critical(self, "Invalid Drop", "Only drop single files or folders!")
-        else:
-            QMessageBox.critical(self, "Invalid Path", "Dropped file path is invalid!")
+
 
     def start_batch_process(self, root=""):
         self.store_settings()
@@ -262,7 +263,7 @@ class BounceAnalyzer(QMainWindow, Ui_Bounce):
         return error_files
 
     def auto_process(self, filename):
-        logging.info(f"Process file {filename}")
+        logger.info(f"Process file {filename}")
         self.data_control.save_on_data_event = True
         self.video_done = False
         self.videoController.load_video(filename)
