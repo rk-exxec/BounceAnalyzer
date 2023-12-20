@@ -344,11 +344,12 @@ def _get_scale(streak, y_values, first_x, info: VideoInfoPresets) -> float:
         bottom_border = np.argmax(line[top_border+1:] == max_val) + top_border+1
         return abs(bottom_border - top_border)
 
-    height = np.zeros((5,), dtype=int)
+    height = np.zeros((15,), dtype=int)
 
     # sample multiple positions and average for more accurate result
     # exclude regions, where surface and object overlap, or object is cut off
-    pos_range = np.linspace(first_x+5, y_values.argmax() - 20, 5, dtype=int)
+    # pos_range = np.linspace(first_x+5, y_values.argmax() - 20, 5, dtype=int)
+    pos_range = range(first_x+5,first_x+20,1)
     for i,idx in enumerate(pos_range):
         height[i] = get_obj_px_height(idx)
     px_delta = height.mean()
