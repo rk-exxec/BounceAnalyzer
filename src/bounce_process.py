@@ -206,13 +206,16 @@ class BounceAnalyzer(QMainWindow, Ui_Bounce):
             self.progressBar.show()
             self.abortBatchBtn.show()
             error_files = self.batch_process(glb, root, target_parent=target)
-            self.batch_done(error_files)
+            self.batch_done(error_files, target=target)
             # self.batch_thread = CallbackWorker(self.batch_process, glb, slotOnFinished=self.batch_done)
             # self.batch_thread.start()
 
-    def batch_done(self, error = None):
+    def batch_done(self, error = None, target = None):
         if error:
             QMessageBox.information(self, "Done", "Batch processing done!\nDuring the processing, errors were encountered in the following files and therefore skipped:\n" + "\n".join(error))
+            if target:
+                with open(Path(target) / "errors.log") as f:
+                    f.write(error)
         else:
             QMessageBox.information(self, "Done", "Batch processing done!")
         self.progressBar.hide()
@@ -249,7 +252,7 @@ class BounceAnalyzer(QMainWindow, Ui_Bounce):
                 self.auto_process(f)
             except Exception as e:
                 # store all failed files for later display
-                error_files.append(str(relative_path) + ":\n" + str(e) + "\n")
+                error_files.append(str(relative_path) + ":\n\t" + str(e) + "\n\t" + str(e.with_traceback())+ "\n")
                 # res = QMessageBox.question(self,"Error encountered!", f"While processing the program encountered an error. Continue?\n\nError:\n{e}")
                 # if res == QMessageBox.StandardButton.Yes:
                 #     continue
