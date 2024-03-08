@@ -39,6 +39,7 @@ class BouncePlot(pg.GraphicsLayoutWidget):
         self.plot_pen = pg.mkPen(color="g", width=2, cosmetic=True)
         self.plot_vis = {"pen":self.plot_pen}
         self.line_vis = {"pen":pg.mkPen(color="m", width=1, cosmetic=True)}
+        self.line_release_vis = {"pen":pg.mkPen(color=(50,50,255), width=1, cosmetic=True)}
         self.slope_vis = {"pen":pg.mkPen(color=(125,125,0), width=1, cosmetic=True)}
         
         self.position = pg.PlotItem(title="Position", labels={"left":("d", "m"), "bottom":("t","s")})
@@ -47,10 +48,10 @@ class BouncePlot(pg.GraphicsLayoutWidget):
         self.position.addItem(self.positionGraph)
         self.positionScatter = pg.PlotDataItem(x=[], y=[], **self.scatter_vis)
         self.position.addItem(self.positionScatter)
-        self.positionVLine = pg.InfiniteLine(None, angle = 90, movable=False, **self.line_vis)
-        self.position.addItem(self.positionVLine)
-        self.positionVLineOut = pg.InfiniteLine(None, angle = 90, movable=False, **self.line_vis)
-        self.position.addItem(self.positionVLineOut)
+        self.positionVLineTouch = pg.InfiniteLine(None, angle = 90, movable=False, **self.line_vis)
+        self.position.addItem(self.positionVLineTouch)
+        self.positionVLineRelease = pg.InfiniteLine(None, angle = 90, movable=False, **self.line_release_vis)
+        self.position.addItem(self.positionVLineRelease)
 
         self.positionSpeedInLine = pg.InfiniteLine(None, angle = 90, movable=False, **self.slope_vis)
         self.position.addItem(self.positionSpeedInLine)
@@ -72,6 +73,8 @@ class BouncePlot(pg.GraphicsLayoutWidget):
         self.velocity.addItem(self.velocityScatter)
         self.velocityVLine = pg.InfiniteLine(None, angle = 90, movable=False, **self.line_vis)
         self.velocity.addItem(self.velocityVLine)
+        self.velocityVLineRelease = pg.InfiniteLine(None, angle = 90, movable=False, **self.line_release_vis)
+        self.velocity.addItem(self.velocityVLineRelease)
         self.speedInLine = pg.InfiniteLine(None, angle = 0, movable=False, **self.slope_vis)
         self.velocity.addItem(self.speedInLine)
         self.speedOutLine = pg.InfiniteLine(None, angle = 0, movable=False, **self.slope_vis)
@@ -90,6 +93,8 @@ class BouncePlot(pg.GraphicsLayoutWidget):
         self.accel.addItem(self.accelScatter)
         self.accelVLine = pg.InfiniteLine(None, angle = 90, movable=False, **self.line_vis)
         self.accel.addItem(self.accelVLine)
+        self.accelVLineRelease = pg.InfiniteLine(None, angle = 90, movable=False, **self.line_release_vis)
+        self.accel.addItem(self.accelVLineRelease)
         self.accelHLine = pg.InfiniteLine(None, angle = 0, movable=False, **self.line_vis)
         self.accel.addItem(self.accelHLine)
         self.accel.getViewBox().invertY()
@@ -111,9 +116,17 @@ class BouncePlot(pg.GraphicsLayoutWidget):
 
         self.accelVLine.setPos(data_plot.impact_time)
         self.velocityVLine.setPos(data_plot.impact_time)
-        self.positionVLine.setPos(data_plot.impact_time)
-        if data_plot.release_time: self.positionVLineOut.setPos(data_plot.release_time)
-        # self.accelHLine.setPos(data_plot.acceleration_thresh)
+        self.positionVLineTouch.setPos(data_plot.impact_time)
+        if data_plot.release_time: 
+            self.positionVLineRelease.setPos(data_plot.release_time)
+            self.velocityVLineRelease.setPos(data_plot.release_time)
+            self.accelVLineRelease.setPos(data_plot.release_time)
+        else:
+            self.positionVLineRelease.setPos(-1000)
+            self.velocityVLineRelease.setPos(-1000)
+            self.accelVLineRelease.setPos(-1000)
+        
+        self.accelHLine.setPos(data_plot.accel_in)
 
         self.positionSpeedInLine.setAngle(math.degrees(math.atan(data_plot.speed_in)))
         self.positionSpeedInLine.setPos((0,data_plot.speed_in_intercept))
@@ -140,7 +153,7 @@ class BouncePlot(pg.GraphicsLayoutWidget):
 
         self.accelVLine.setPos(0)
         self.velocityVLine.setPos(0)
-        self.positionVLine.setPos(0)
+        self.positionVLineTouch.setPos(0)
         self.accelHLine.setPos(0)
         self.positionSpeedInLine.setAngle(0)
         self.positionSpeedInLine.setPos(0)
