@@ -159,7 +159,7 @@ def bounce_eval_y(video: np.ndarray, info: VideoInfoPresets, frame_width, frame_
             ball_release= False
 
         # determine average outgoing acceleration
-        accel_linefit_up = Polynomial(P.polyfit(time[min_acc_idx+4*(min_acc_idx-touch_idx):], accel[min_acc_idx+4*(min_acc_idx-touch_idx):],deg=1))
+        accel_linefit_up = Polynomial(P.polyfit(time[min_acc_idx+4*(min_acc_idx-touch_idx):], accel_smoothed[min_acc_idx+4*(min_acc_idx-touch_idx):],deg=0))
         accel_out = float(accel_linefit_up.coef[0])
         data.accel_out = accel_out
         # the detection range for release starts after object reached max velocity plus some buffer for noise
