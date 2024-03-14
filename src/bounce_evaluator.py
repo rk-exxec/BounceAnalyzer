@@ -171,7 +171,7 @@ def bounce_eval_y(video: np.ndarray, info: VideoInfoPresets, frame_width, frame_
         # average speed in fit
         down_window_start = (touch_idx - line_fit_window)
         if down_window_start < 0 : down_window_start = 0
-        accel_linefit_down = Polynomial(P.polyfit(time[down_window_start:touch_idx], position[down_window_start:touch_idx],deg=1))
+        pos_linefit_down = Polynomial(P.polyfit(time[down_window_start:touch_idx], position[down_window_start:touch_idx],deg=1))
         # speed_in = float(pos_linefit_down.coef[1])
 
 
@@ -179,19 +179,19 @@ def bounce_eval_y(video: np.ndarray, info: VideoInfoPresets, frame_width, frame_
         pos_linefit_up = Polynomial(P.polyfit(time[release_pos:up_window_end], position[release_pos:up_window_end],deg=1))
         pos_linefit_init = Polynomial(P.polyfit(time[init_rebound_window], position[init_rebound_window],deg=1))
         # calculated with sustained out velocity
-        coef_of_restitution = abs(pos_linefit_up.coef[1] / accel_linefit_down.coef[1])
+        coef_of_restitution = abs(pos_linefit_up.coef[1] / pos_linefit_down.coef[1])
         # maximum velocity on rebound, might be decelerated due to adhesive forces
         max_out_vel = velocity[max_out_vel_idx]
-        init_cor = abs(max_out_vel / accel_linefit_down.coef[1])
+        init_cor = abs(max_out_vel / pos_linefit_down.coef[1])
 
 
         data.cor= float(coef_of_restitution)
-        data.speed_in= float(accel_linefit_down.coef[1]) # m/s
+        data.speed_in= float(pos_linefit_down.coef[1]) # m/s
         data.speed_out= float(pos_linefit_up.coef[1]) # m/s
         # if abs(data.speed_out) < 0.05: # if out speed too slow assume no release
         #     data.release_idx = None 
         #     data.release_time = None
-        data.speed_in_intercept= float(accel_linefit_down.coef[0])
+        data.speed_in_intercept= float(pos_linefit_down.coef[0])
         data.speed_out_intercept= float(pos_linefit_up.coef[0])
         data.initial_cor =  float(init_cor)
         data.initial_speed_out= float(max_out_vel) # pos_linefit_init.coef[1] # m/s
