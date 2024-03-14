@@ -187,7 +187,7 @@ def bounce_eval_y(video: np.ndarray, info: VideoInfoPresets, frame_width, frame_
         # speed out
         pos_linefit_up = Polynomial(P.polyfit(time[release_idx:], position[release_idx:],deg=2))
 
-        # average speed in fit
+        # pos in fit
         down_window_start = (touch_idx - line_fit_window)
         if down_window_start < 0 : down_window_start = 0
         pos_linefit_down = Polynomial(P.polyfit(time[:touch_idx], position[:touch_idx],deg=2))
@@ -206,13 +206,13 @@ def bounce_eval_y(video: np.ndarray, info: VideoInfoPresets, frame_width, frame_
 
 
         data.cor= float(coef_of_restitution)
-        data.speed_in= float(pos_linefit_down.coef[1]) # m/s
-        data.speed_out= float(pos_linefit_up.coef[1]) # m/s
+        data.speed_in= float(pos_linefit_down.deriv()(touch_time)) # m/s
+        data.speed_out= float(pos_linefit_up.deriv()(touch_time)) # m/s
         # if abs(data.speed_out) < 0.05: # if out speed too slow assume no release
         #     data.release_idx = None 
         #     data.release_time = None
-        data.speed_in_intercept= float(pos_linefit_down.coef[0])
-        data.speed_out_intercept= float(pos_linefit_up.coef[0])
+        data.speed_in_intercept = float(pos_linefit_down(touch_time))
+        data.speed_out_intercept = float(pos_linefit_up(touch_time))
         data.initial_cor =  float(init_cor)
         data.initial_speed_out= float(max_out_vel) # pos_linefit_init.coef[1] # m/s
         data.initial_speed_out_intercept= float(position[max_out_vel_idx] - max_out_vel*time[max_out_vel_idx]) #float(pos_linefit_init.coef[0]) # float(position[velocity[min_acc_idx:].argmin()+min_acc_idx]) #
