@@ -106,9 +106,9 @@ def bounce_eval_y(video: np.ndarray, info: VideoInfoPresets, frame_width, frame_
 
         # key points
         max_pos_idx = position.argmax()
-        max_acc_idx = np.abs(accel_smoothed).argmax()
+        # min_acc_idx = np.abs(accel_smoothed).argmax()
         min_acc_idx = accel_smoothed.argmin()
-        max_acceleration = accel[max_acc_idx]
+        max_acceleration = accel[min_acc_idx]
         data.max_acceleration = float(max_acceleration)
         
 
@@ -137,8 +137,8 @@ def bounce_eval_y(video: np.ndarray, info: VideoInfoPresets, frame_width, frame_
 
         # release is, where acceleration reaches same value as before bounce >after< short upward acceleration phase due to elasticity
         try:
-            # check if there is a release pos
-            release_range_start = max_acc_idx + (np.argwhere(position[max_acc_idx:]<position[touch_idx]+0.01)[0]).item()
+            # check if there is a release, pos after bounce should be much larger than touch_pos, if almost identical, there is no bounce
+            release_range_start = min_acc_idx + (np.argwhere(position[min_acc_idx:]<position[touch_idx]+0.01)[0]).item()
             ball_release = True
         except IndexError:
             release_range_start = max_out_vel_idx+2
@@ -166,7 +166,7 @@ def bounce_eval_y(video: np.ndarray, info: VideoInfoPresets, frame_width, frame_
         if up_window_end >= len(time): up_window_end = len(time) - 1
         
         # object coming back up not yet decelerated by surface adhesion
-        init_rebound_window = slice(max_acc_idx, release_pos - 5)
+        init_rebound_window = slice(min_acc_idx, release_pos - 5)
 
         # average speed in fit
         down_window_start = (touch_idx - line_fit_window)
@@ -195,7 +195,7 @@ def bounce_eval_y(video: np.ndarray, info: VideoInfoPresets, frame_width, frame_
         data.speed_out_intercept= float(pos_linefit_up.coef[0])
         data.initial_cor =  float(init_cor)
         data.initial_speed_out= float(max_out_vel) # pos_linefit_init.coef[1] # m/s
-        data.initial_speed_out_intercept= float(position[max_out_vel_idx] - max_out_vel*time[max_out_vel_idx]) #float(pos_linefit_init.coef[0]) # float(position[velocity[max_acc_idx:].argmin()+max_acc_idx]) #
+        data.initial_speed_out_intercept= float(position[max_out_vel_idx] - max_out_vel*time[max_out_vel_idx]) #float(pos_linefit_init.coef[0]) # float(position[velocity[min_acc_idx:].argmin()+min_acc_idx]) #
 
     except Exception as e:
         logger.error("Bounce analysis not finished due to:\n" + str(e))
