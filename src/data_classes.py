@@ -68,6 +68,7 @@ class BounceData:#(JSONSerializable, JSONFileWizard):
     speed_out_intercept: float = 0.0
     max_acceleration: float = 0.0
     accel_in: float = 0.0
+    accel_out: float = 0.0
     initial_cor: float = 0.0
     initial_speed_out: float = 0.0
     initial_speed_out_intercept: float = 0.0
