@@ -126,7 +126,7 @@ class BouncePlot(pg.GraphicsLayoutWidget):
             self.velocityVLineRelease.setPos(-1000)
             self.accelVLineRelease.setPos(-1000)
         
-        self.accelHLine.setPos(data_plot.accel_in)
+        self.accelHLine.setPos(data_plot.accel_out)
 
         self.positionSpeedInLine.setAngle(math.degrees(math.atan(data_plot.speed_in)))
         self.positionSpeedInLine.setPos((0,data_plot.speed_in_intercept))
