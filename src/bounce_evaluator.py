@@ -182,24 +182,21 @@ def bounce_eval_y(video: np.ndarray, info: VideoInfoPresets, frame_width, frame_
         data.max_deformation = float(max_deformation)
 
         # linefit on position before and after hit for velocity detection
-
-
         up_window_end = release_idx + line_fit_window
         if up_window_end >= len(time): up_window_end = len(time) - 1
-        
-        # object coming back up not yet decelerated by surface adhesion
-        init_rebound_window = slice(min_acc_idx, release_idx - 5)
+        # speed out
+        pos_linefit_up = Polynomial(P.polyfit(time[release_idx:], position[release_idx:],deg=2))
 
         # average speed in fit
         down_window_start = (touch_idx - line_fit_window)
         if down_window_start < 0 : down_window_start = 0
-        pos_linefit_down = Polynomial(P.polyfit(time[down_window_start:touch_idx], position[down_window_start:touch_idx],deg=1))
+        pos_linefit_down = Polynomial(P.polyfit(time[:touch_idx], position[:touch_idx],deg=2))
         # speed_in = float(pos_linefit_down.coef[1])
 
-
-        # speed out
-        pos_linefit_up = Polynomial(P.polyfit(time[release_idx:up_window_end], position[release_idx:up_window_end],deg=1))
+        # object coming back up not yet decelerated by surface adhesion
+        init_rebound_window = slice(min_acc_idx, release_idx - 5)
         # pos_linefit_init = Polynomial(P.polyfit(time[init_rebound_window], position[init_rebound_window],deg=1)) # replaced by just getting max vel
+
         # calculated with sustained out velocity
         coef_of_restitution = abs(pos_linefit_up.coef[1] / pos_linefit_down.coef[1])
         # maximum velocity on rebound, might be decelerated due to adhesive forces
