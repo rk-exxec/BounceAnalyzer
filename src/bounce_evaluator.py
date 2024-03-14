@@ -314,7 +314,7 @@ def _find_contour_y(img: np.ndarray, info:VideoInfoPresets) -> tuple[np.ndarray,
     uses user defined relative threshold (to max value) for edge detection
     """
     cvimg = int(2**info.bit_depth-1) - img #invert image by subtracting it from fully white max value
-    img = cv2.GaussianBlur(img, (5,5), 1)#
+    # img = cv2.GaussianBlur(img, (5,5), 1)#
 
     thresh = info.rel_threshold * cvimg.max()
     thresh_idx = np.argmin(cvimg <= thresh, axis=0)
