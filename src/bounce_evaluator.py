@@ -157,10 +157,18 @@ def bounce_eval_y(video: np.ndarray, info: VideoInfoPresets, frame_width, frame_
         except IndexError:
             release_range_start = max_out_vel_idx+2
             ball_release= False
+
+        # determine average outgoing acceleration
+        accel_linefit_up = Polynomial(P.polyfit(time[min_acc_idx+4*(min_acc_idx-touch_idx):], accel[min_acc_idx+4*(min_acc_idx-touch_idx):],deg=1))
+        accel_out = float(accel_linefit_up.coef[0])
+        data.accel_out = accel_out
         # the detection range for release starts after object reached max velocity plus some buffer for noise
         # this does not actuall check if ball released, just finds the location where the accelereation returns to normal
-        accel_local_min_idx = max_acc_idx + np.argmax(accel_smoothed[max_acc_idx:max_acc_idx+3*(max_acc_idx-touch_idx)])
-        release_pos = accel_local_min_idx + (np.argwhere(accel_smoothed[accel_local_min_idx:] <= (accel_in))[0]).item()
+        # accel_local_min_idx = min_acc_idx + np.argmax(accel_smoothed[min_acc_idx:min_acc_idx+3*(min_acc_idx-touch_idx)])
+        # first find first dip above 0
+        acc_zero_after_min = min_acc_idx + (np.argwhere(accel_smoothed[min_acc_idx:] >= accel_out)[0]).item()
+        # find pos where pos gets above or to avg accel after zero crossing
+        release_pos = acc_zero_after_min + (np.argwhere(accel_smoothed[acc_zero_after_min:] <= (accel_out))[0]).item()
 
         release_time = release_pos*time_step + time[0]
         # store release only if found, else only use for internal processing steps
