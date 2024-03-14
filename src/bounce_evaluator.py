@@ -203,7 +203,8 @@ def bounce_eval_y(video: np.ndarray, info: VideoInfoPresets, frame_width, frame_
         # calculated with sustained out velocity
         coef_of_restitution = abs(pos_linefit_up.coef[1] / pos_linefit_down.coef[1])
         # maximum velocity on rebound, might be decelerated due to adhesive forces
-        max_out_vel = velocity[max_out_vel_idx]
+        # max_out_vel = velocity[max_out_vel_idx]
+        max_out_vel = velocity_smoothed[max_out_vel_idx]
         init_cor = abs(max_out_vel / pos_linefit_down.coef[1])
 
 
