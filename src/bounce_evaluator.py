@@ -53,8 +53,22 @@ def bounce_eval(video: np.ndarray, info: VideoInfoPresets):
 
 def bounce_eval_y(video: np.ndarray, info: VideoInfoPresets, frame_width, frame_height, total_frames, time_step: float, line_fit_window, savgol_polyorder, savgol_filter_window, pixel_scale, relative_trig_thresh=0.9):
     ''' evaluate vertical movement and bounce of object '''
+    # deflicker
+    # brightest_value = video.max()
+    # brightest_in_frames = video.max(axis=(1,2))
+    # brightnes_eq_mult = brightest_value / brightest_in_frames
+
+    # defl_video = video * brightnes_eq_mult[:,np.newaxis,np.newaxis]
+
     # generate streak image
     streak = video.min(axis=2).T
+
+    # deflicker
+    # brightest_value = streak.max()
+    # brightest_in_frames = streak.max(axis=(0))
+    # brightnes_eq_mult = np.nan_to_num((brightest_value / brightest_in_frames), posinf=1, neginf=1)
+    # streak = streak * brightnes_eq_mult[np.newaxis,:]
+    
 
     # find contours in streak image
     contour_x, contour_y, thresh_streak = _find_contour_y(streak, info)
