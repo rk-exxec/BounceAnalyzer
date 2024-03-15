@@ -131,7 +131,7 @@ def bounce_eval_y(video: np.ndarray, info: VideoInfoPresets, frame_width, frame_
         #estimate first touch point by subtracting material thickness from max pos
         estimate_touch_idx = np.argwhere(position >=(position[max_pos_idx] - 0.0012))[0].item()
 
-        max_out_vel_idx = velocity[estimate_touch_idx:].argmin() + estimate_touch_idx
+        max_out_vel_idx = velocity_smoothed[estimate_touch_idx:].argmin() + estimate_touch_idx
 
         # accel fit
         down_window_start = (estimate_touch_idx - line_fit_window)
@@ -196,23 +196,23 @@ def bounce_eval_y(video: np.ndarray, info: VideoInfoPresets, frame_width, frame_
         # object coming back up not yet decelerated by surface adhesion
         init_rebound_window = slice(min_acc_idx, release_idx - 5)
         # pos_linefit_init = Polynomial(P.polyfit(time[init_rebound_window], position[init_rebound_window],deg=1)) # replaced by just getting max vel
-
-        # calculated with sustained out velocity
-        coef_of_restitution = abs(pos_linefit_up.coef[1] / pos_linefit_down.coef[1])
-        # maximum velocity on rebound, might be decelerated due to adhesive forces
-        # max_out_vel = velocity[max_out_vel_idx]
-        max_out_vel = velocity_smoothed[max_out_vel_idx]
-        init_cor = abs(max_out_vel / pos_linefit_down.coef[1])
-
-
-        data.cor= float(coef_of_restitution)
         data.speed_in= float(pos_linefit_down.deriv()(touch_time)) # m/s
-        data.speed_out= float(pos_linefit_up.deriv()(touch_time)) # m/s
+        data.speed_out= float(pos_linefit_up.deriv()(release_time)) # m/s
         # if abs(data.speed_out) < 0.05: # if out speed too slow assume no release
         #     data.release_idx = None 
         #     data.release_time = None
-        data.speed_in_intercept = float(pos_linefit_down(touch_time))
-        data.speed_out_intercept = float(pos_linefit_up(touch_time))
+        data.speed_in_intercept = float(pos_linefit_down(0))
+        data.speed_out_intercept = float(pos_linefit_up(0))
+
+         # calculated with sustained out velocity
+        coef_of_restitution = abs(data.speed_out / data.speed_in)
+        data.cor= float(coef_of_restitution)
+
+        # maximum velocity on rebound, might be decelerated due to adhesive forces
+        # max_out_vel = velocity[max_out_vel_idx]
+        max_out_vel = velocity_smoothed[max_out_vel_idx]
+        init_cor = abs(max_out_vel / data.speed_in)
+
         data.initial_cor =  float(init_cor)
         data.initial_speed_out= float(max_out_vel) # pos_linefit_init.coef[1] # m/s
         data.initial_speed_out_intercept= float(position[max_out_vel_idx] - max_out_vel*time[max_out_vel_idx]) #float(pos_linefit_init.coef[0]) # float(position[velocity[min_acc_idx:].argmin()+min_acc_idx]) #
